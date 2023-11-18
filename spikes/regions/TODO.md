@@ -1,5 +1,5 @@
 - (/) show map of edinburgh in webapp
-- (x) load and show a GeoJSON set of features on the Map
+- (/) load and show a GeoJSON set of features on the Map
 - (x) load that GeoJSON from a service
 - (x) define those features in the service by loading from an openstreetmap file and showing all polygons
 - (x) filter polygons to those of a particular label or type
