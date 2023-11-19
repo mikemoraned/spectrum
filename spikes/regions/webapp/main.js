@@ -16,10 +16,12 @@ const map = new mapboxgl.Map({
   ...starting_position,
 });
 
-map.on("load", () => {
-  console.log("loading ...");
-
-  map.addSource("maine", {
+async function fetchFeature() {
+  console.log("calling service ...");
+  const service_url = import.meta.env.VITE_SERVICE_BASE_URL;
+  const response = await fetch(service_url);
+  console.log("called service");
+  const json = {
     type: "geojson",
     data: {
       type: "Feature",
@@ -52,29 +54,38 @@ map.on("load", () => {
         ],
       },
     },
-  });
+  };
+  return json;
+}
 
-  map.addLayer({
-    id: "maine",
-    type: "fill",
-    source: "maine", // reference the data source
-    layout: {},
-    paint: {
-      "fill-color": "#0080ff", // blue color fill
-      "fill-opacity": 0.5,
-    },
-  });
+map.on("load", () => {
+  console.log("loading ...");
 
-  // Add a black outline around the polygon.
-  map.addLayer({
-    id: "outline",
-    type: "line",
-    source: "maine",
-    layout: {},
-    paint: {
-      "line-color": "#000",
-      "line-width": 3,
-    },
+  fetchFeature().then((json) => {
+    map.addSource("maine", json);
+
+    map.addLayer({
+      id: "maine",
+      type: "fill",
+      source: "maine", // reference the data source
+      layout: {},
+      paint: {
+        "fill-color": "#0080ff", // blue color fill
+        "fill-opacity": 0.5,
+      },
+    });
+
+    // Add a black outline around the polygon.
+    map.addLayer({
+      id: "outline",
+      type: "line",
+      source: "maine",
+      layout: {},
+      paint: {
+        "line-color": "#000",
+        "line-width": 3,
+      },
+    });
   });
 
   console.log("loading done");
