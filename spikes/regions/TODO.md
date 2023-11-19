@@ -1,6 +1,12 @@
 - (/) show map of edinburgh in webapp
 - (/) load and show a GeoJSON set of features on the Map
 - (/) load GeoJSON dynamically from a service
-- (x) define those features in the service by loading from an openstreetmap file and showing all polygons
+- (x) define those features in the service by loading from an openstreetmap file and showing all polygons of interest
+  - (x) show meadows
+    - (/) find meadows in the `edinburgh_scotland.osm.pbf` file
+    - (x) convert nodes into geojson and save to file (for separate validation)
+    - (x) integrate into service and load into webapp
+  - (x) find all ways tagged `leisure=park`
+  - (x) integrate into service and load into webapp
 - (x) filter polygons to those of a particular label or type
 - ...
