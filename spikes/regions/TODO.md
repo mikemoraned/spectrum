@@ -5,7 +5,7 @@
   - (x) show meadows
     - (/) find meadows in the `edinburgh_scotland.osm.pbf` file
     - (/) convert nodes into geojson and save to file (for separate validation)
-    - (x) fix bug: re-order positions based on order in way
+    - (/) fix bug: re-order positions based on order in way
     - (x) integrate into service and load into webapp
   - (x) find all ways tagged `leisure=park`
   - (x) integrate into service and load into webapp
