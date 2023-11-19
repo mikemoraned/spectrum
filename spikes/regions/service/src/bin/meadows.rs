@@ -38,6 +38,9 @@ fn main() -> Result<(), ()> {
         )
         .unwrap();
 
+    // add first position to end to make it a ring
+    positions.push(positions[0].clone());
+
     let geometry = Geometry::new(Value::Polygon(vec![positions]));
 
     let geojson = GeoJson::Feature(Feature {
