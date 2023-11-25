@@ -2,7 +2,7 @@
 - (/) load and show a GeoJSON set of features on the Map
 - (/) load GeoJSON dynamically from a service
 - (x) define those features in the service by loading from an openstreetmap file and showing all polygons of interest
-  - (x) show meadows
+  - (/) show meadows
     - (/) find meadows in the `edinburgh_scotland.osm.pbf` file
     - (/) convert nodes into geojson and save to file (for separate validation)
     - (/) fix bug: re-order positions based on order in way
