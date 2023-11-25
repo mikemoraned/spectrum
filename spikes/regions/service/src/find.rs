@@ -17,6 +17,17 @@ pub fn find() -> Result<GeoJson, ()> {
             ("leisure", "park"),
             ("leisure", "pitch"),
             ("leisure", "wildlife_hide"),
+            ("natural", "fell"),
+            ("natural", "grassland"),
+            ("natural", "heath"),
+            ("natural", "moor"),
+            ("natural", "scrub"),
+            ("natural", "shrubbery"),
+            ("natural", "tree"),
+            ("natural", "tree_row"),
+            ("natural", "tree_stump"),
+            ("natural", "tundra"),
+            ("natural", "wood"),
         ];
         way.tags().any(|key_value| pairs.contains(&key_value))
     }
