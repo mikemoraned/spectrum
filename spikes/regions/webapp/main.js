@@ -48,16 +48,16 @@ map.on("load", () => {
     });
 
     // Add a black outline around the polygon.
-    map.addLayer({
-      id: "outline",
-      type: "line",
-      source: "maine",
-      layout: {},
-      paint: {
-        "line-color": "#000",
-        "line-width": 3,
-      },
-    });
+    // map.addLayer({
+    //   id: "outline",
+    //   type: "line",
+    //   source: "maine",
+    //   layout: {},
+    //   paint: {
+    //     "line-color": "#000",
+    //     "line-width": 3,
+    //   },
+    // });
   });
 
   console.log("loading done");

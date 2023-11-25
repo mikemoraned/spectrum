@@ -7,7 +7,17 @@ pub fn find() -> Result<GeoJson, ()> {
     let mut reader = IndexedReader::from_path("data/edinburgh_scotland.osm.pbf").unwrap();
 
     fn way_filter(way: &osmpbf::Way<'_>) -> bool {
-        let pairs = vec![("leisure", "park"), ("leisure", "garden")];
+        let pairs = vec![
+            ("leisure", "common"),
+            ("leisure", "dog_park"),
+            ("leisure", "garden"),
+            ("leisure", "golf_course"),
+            ("leisure", "horse_riding"),
+            ("leisure", "nature_reserve"),
+            ("leisure", "park"),
+            ("leisure", "pitch"),
+            ("leisure", "wildlife_hide"),
+        ];
         way.tags().any(|key_value| pairs.contains(&key_value))
     }
 
