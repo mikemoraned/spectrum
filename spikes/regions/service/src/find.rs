@@ -10,7 +10,7 @@ pub fn find() -> Result<GeoJson, ()> {
         let pairs = vec![
             ("leisure", "common"),
             ("leisure", "dog_park"),
-            ("leisure", "garden"),
+            ("garden:type", "community"),
             ("leisure", "golf_course"),
             ("leisure", "horse_riding"),
             ("leisure", "nature_reserve"),
