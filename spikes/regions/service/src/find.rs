@@ -10,7 +10,6 @@ pub fn find() -> Result<GeoJson, ()> {
         let generic: Vec<(&str, &str)> = vec![
             ("leisure", "common"),
             ("leisure", "dog_park"),
-            ("garden:type", "community"),
             ("leisure", "golf_course"),
             ("leisure", "horse_riding"),
             ("leisure", "nature_reserve"),
@@ -32,9 +31,11 @@ pub fn find() -> Result<GeoJson, ()> {
         ];
         let generic_tag_set: HashSet<(&str, &str)> = generic.into_iter().collect();
         let tag_set: HashSet<(&str, &str)> = way.tags().collect();
-        tag_set.intersection(&generic_tag_set).count() > 0
-        // way.tags()
-        //     .any(|key_value| generic_tag_set.contains(&key_value))
+        if tag_set.contains(&("leisure", "garden")) {
+            tag_set.contains(&("access", "yes")) || tag_set.contains(&("garden:type", "community"))
+        } else {
+            tag_set.intersection(&generic_tag_set).count() > 0
+        }
     }
 
     let mut pending_refs_for_ways: HashMap<i64, Vec<i64>> = HashMap::new();
