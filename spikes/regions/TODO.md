@@ -8,6 +8,6 @@
     - (/) fix bug: re-order positions based on order in way
     - (/) integrate into service and load into webapp
   - (/) find all ways tagged `leisure=park`
-  - (x) integrate into service and load into webapp
+  - (/) integrate into service and load into webapp
 - (x) filter polygons to those of a particular label or type
 - ...
