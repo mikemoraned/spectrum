@@ -54,8 +54,26 @@ pub fn find() -> Result<GeoJson, ()> {
                             if pending_refs[i] == dense_node.id() {
                                 positions[i] = position.clone();
                                 println!(
-                                    "slotting in {} at position {} in way {}",
+                                    "slotting in dense_node {} at position {} in way {}",
                                     dense_node.id(),
+                                    i,
+                                    way_id
+                                );
+                            }
+                        }
+                    }
+                }
+                Element::Node(node) => {
+                    println!("node: lat: {}, lon: {}", node.lat(), node.lon());
+                    let position = vec![node.lon(), node.lat()];
+                    for (way_id, pending_refs) in pending_refs.iter() {
+                        let positions = positions_for_way.get_mut(way_id).unwrap();
+                        for i in 0..pending_refs.len() {
+                            if pending_refs[i] == node.id() {
+                                positions[i] = position.clone();
+                                println!(
+                                    "slotting in node {} at position {} in way {}",
+                                    node.id(),
                                     i,
                                     way_id
                                 );
