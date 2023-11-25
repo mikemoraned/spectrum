@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use geojson::{Feature, FeatureCollection, GeoJson, Geometry, Position, Value};
 use osmpbf::{Element, IndexedReader};
@@ -7,7 +7,7 @@ pub fn find() -> Result<GeoJson, ()> {
     let mut reader = IndexedReader::from_path("data/edinburgh_scotland.osm.pbf").unwrap();
 
     fn way_filter(way: &osmpbf::Way<'_>) -> bool {
-        let pairs = vec![
+        let generic: Vec<(&str, &str)> = vec![
             ("leisure", "common"),
             ("leisure", "dog_park"),
             ("garden:type", "community"),
@@ -28,8 +28,13 @@ pub fn find() -> Result<GeoJson, ()> {
             ("natural", "tree_stump"),
             ("natural", "tundra"),
             ("natural", "wood"),
+            ("amenity", "grave_yard"),
         ];
-        way.tags().any(|key_value| pairs.contains(&key_value))
+        let generic_tag_set: HashSet<(&str, &str)> = generic.into_iter().collect();
+        let tag_set: HashSet<(&str, &str)> = way.tags().collect();
+        tag_set.intersection(&generic_tag_set).count() > 0
+        // way.tags()
+        //     .any(|key_value| generic_tag_set.contains(&key_value))
     }
 
     let mut pending_refs_for_ways: HashMap<i64, Vec<i64>> = HashMap::new();
