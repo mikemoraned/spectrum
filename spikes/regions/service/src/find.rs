@@ -28,6 +28,16 @@ pub fn find() -> Result<GeoJson, ()> {
             ("natural", "tundra"),
             ("natural", "wood"),
             ("amenity", "grave_yard"),
+            ("landuse", "farmland"),
+            ("landuse", "farmyard"),
+            ("landuse", "forest"),
+            ("landuse", "meadow"),
+            ("landuse", "orchard"),
+            ("landuse", "vineyard"),
+            ("landuse", "cemetery"),
+            ("landuse", "grass"),
+            ("landuse", "recreation_ground"),
+            ("landuse", "village_green"),
         ];
         let generic_tag_set: HashSet<(&str, &str)> = generic.into_iter().collect();
         let tag_set: HashSet<(&str, &str)> = way.tags().collect();
