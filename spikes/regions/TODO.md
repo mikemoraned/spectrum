@@ -9,5 +9,5 @@
     - (/) integrate into service and load into webapp
   - (/) find all ways tagged `leisure=park`
   - (/) integrate into service and load into webapp
-- (x) filter polygons to those of a particular label or type
+- (/) filter polygons to those of a particular label or type
 - ...
