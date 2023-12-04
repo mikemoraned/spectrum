@@ -1,0 +1,6 @@
+- (x) same functionality as `regions` spike except running client-side in WASM i.e.
+  - show a map of edinburgh with all green areas highlighted
+    - can use same limited definitions we have there
+- (x) a Vite app running Rust client-side in WASM
+- (x) return GeoJSON showing the Meadows, where the Meadows shape is hard-coded
+- (x) ...
