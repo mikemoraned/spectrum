@@ -1,4 +1,5 @@
 use wasm_bindgen::prelude::wasm_bindgen;
+use web_sys::console;
 
 #[derive(PartialEq, Debug)]
 #[wasm_bindgen]
@@ -8,8 +9,11 @@ pub struct Counter {
 
 #[wasm_bindgen]
 impl Counter {
+    #[wasm_bindgen(constructor)]
     pub fn new() -> Counter {
-        Counter { count: 0 }
+        let instance = Counter { count: 0 };
+        console::log_1(&format!("creating {:?}", instance).into());
+        instance
     }
 
     pub fn set_count(&mut self, value: u8) {
