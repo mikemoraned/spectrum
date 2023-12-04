@@ -4,5 +4,6 @@
   - (-) ~a Vite app running Rust client-side in WASM~
   - port the counter default to use Rust + WASM (as a proof)
   - (/) a simple vanilla JS loading WASM
+  - (x) get vanilla JS app running on netlify
   - (x) return GeoJSON showing the Meadows, where the Meadows shape is hard-coded
   - (x) ...
