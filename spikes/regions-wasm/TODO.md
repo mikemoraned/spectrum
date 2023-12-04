@@ -2,8 +2,8 @@
   - show a map of edinburgh with all green areas highlighted
     - can use same limited definitions we have there
   - (-) ~a Vite app running Rust client-side in WASM~
-  - port the counter default to use Rust + WASM (as a proof)
   - (/) a simple vanilla JS loading WASM
-  - (x) get vanilla JS app running on netlify
+  - (/) get vanilla JS app running on netlify
+    - yup: see https://deploy-preview-2--sweet-cranachan-e1ec6e.netlify.app
   - (x) return GeoJSON showing the Meadows, where the Meadows shape is hard-coded
   - (x) ...
