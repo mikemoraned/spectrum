@@ -1,6 +1,7 @@
-- (x) get basic shuttle app defined
-  - (x) locally
-  - (x) remotely
+- (/) get basic shuttle app defined
+  - (/) locally
+  - (/) remotely
+    - running as https://shuttle-spike.shuttleapp.rs
 - (x) get it returning some static GeoJson for The Meadows
   - (x) locally
   - (x) remotely
