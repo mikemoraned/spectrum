@@ -5,5 +5,7 @@
   - (/) a simple vanilla JS loading WASM
   - (/) get vanilla JS app running on netlify
     - yup: see https://deploy-preview-2--sweet-cranachan-e1ec6e.netlify.app
+  - (x) show a mapbox map
+    - (x) pass credentials
   - (x) return GeoJSON showing the Meadows, where the Meadows shape is hard-coded
   - (x) ...
