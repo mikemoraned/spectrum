@@ -1,3 +1,10 @@
 - (x) get basic shuttle app defined
-
+  - (x) locally
+  - (x) remotely
+- (x) get it returning some static GeoJson for The Meadows
+  - (x) locally
+  - (x) remotely
+- (x) get it returning json read from a file
+  - (x) locally
+  - (x) remotely
 - (x) ...
