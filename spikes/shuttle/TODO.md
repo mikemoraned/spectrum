@@ -2,8 +2,8 @@
   - (/) locally
   - (/) remotely
     - running as https://shuttle-spike.shuttleapp.rs
-- (x) get it returning some static GeoJson for The Meadows
-  - (x) locally
+- (x) get it returning some static GeoJson for Maine
+  - (/) locally
   - (x) remotely
 - (x) get it returning json read from a file
   - (x) locally
