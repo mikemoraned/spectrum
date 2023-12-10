@@ -1,6 +1,6 @@
 use axum::{http::Method, routing::get, Json, Router};
 use geojson::GeoJson;
-use shuttle_spike::find;
+use shuttle_spike::find::Finder;
 use tower_http::cors::{Any, CorsLayer};
 
 async fn hello_world() -> &'static str {
@@ -8,7 +8,7 @@ async fn hello_world() -> &'static str {
 }
 
 async fn layers() -> Json<GeoJson> {
-    Json(find::find().unwrap())
+    Json(Finder::new().find().unwrap())
 }
 
 #[shuttle_runtime::main]
