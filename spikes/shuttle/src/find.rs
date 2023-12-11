@@ -56,7 +56,7 @@ impl Finder {
     // }
 
     pub fn find(&self) -> Result<GeoJson, ()> {
-        match GeoAssets::get("maine.geojson") {
+        match GeoAssets::get("edinburgh.geojson") {
             Some(f) => match String::from_utf8(f.data.to_vec()) {
                 Ok(s) => match s.parse::<GeoJson>() {
                     Ok(geojson) => Ok(geojson),

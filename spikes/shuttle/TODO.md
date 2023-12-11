@@ -5,7 +5,7 @@
 - (/) get it returning some static GeoJson for Maine
   - (/) locally
   - (/) remotely
-- (x) get it returning json read from a file
-  - (x) locally
+- (/) get it returning json read from a file
+  - (/) locally
   - (x) remotely
 - (x) ...

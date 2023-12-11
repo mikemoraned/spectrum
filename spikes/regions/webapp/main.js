@@ -4,10 +4,10 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 const edinburgh = [-3.188267, 55.953251];
 const maine = [-68.137343, 45.137451];
 const starting_position = {
-  // center: edinburgh,
-  center: maine,
-  // zoom: 12,
-  zoom: 5,
+  center: edinburgh,
+  // center: maine,
+  zoom: 12,
+  // zoom: 5,
 };
 const style = "mapbox://styles/mapbox/streets-v12";
 const map = new mapboxgl.Map({
