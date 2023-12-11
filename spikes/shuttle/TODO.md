@@ -7,5 +7,7 @@
   - (/) remotely
 - (/) get it returning json read from a file
   - (/) locally
-  - (x) remotely
-- (x) ...
+  - (/) remotely
+- (/) get it returning showing GeoJson that represents all of Edinburgh
+  - (/) locally
+  - (/) remotely
