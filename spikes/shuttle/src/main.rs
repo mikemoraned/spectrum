@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{extract::State, http::Method, routing::get, Json, Router};
 use geojson::GeoJson;
 use shuttle_spike::find::Finder;
@@ -5,7 +7,7 @@ use tower_http::cors::{Any, CorsLayer};
 
 #[derive(Clone)]
 struct AppState {
-    finder: Finder,
+    finder: Arc<Finder>,
 }
 
 async fn hello_world() -> &'static str {
@@ -24,7 +26,7 @@ async fn main() -> shuttle_axum::ShuttleAxum {
         .allow_origin(Any);
 
     let state = AppState {
-        finder: Finder::new(),
+        finder: Arc::new(Finder::new()),
     };
 
     let router = Router::new()
