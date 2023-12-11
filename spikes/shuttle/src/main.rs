@@ -1,18 +1,20 @@
-use axum::{http::Method, routing::get, Json, Router};
+use axum::{extract::State, http::Method, routing::get, Json, Router};
 use geojson::GeoJson;
 use shuttle_spike::find::Finder;
 use tower_http::cors::{Any, CorsLayer};
+
+#[derive(Clone)]
+struct AppState {
+    finder: Finder,
+}
 
 async fn hello_world() -> &'static str {
     "Hello, world!"
 }
 
-async fn layers() -> Json<GeoJson> {
-    Json(Finder::new().find().unwrap())
+async fn layers(State(state): State<AppState>) -> Json<GeoJson> {
+    Json(state.finder.find().unwrap())
 }
-
-#[derive(Clone)]
-struct AppState {}
 
 #[shuttle_runtime::main]
 async fn main() -> shuttle_axum::ShuttleAxum {
@@ -21,7 +23,9 @@ async fn main() -> shuttle_axum::ShuttleAxum {
         // allow requests from any origin
         .allow_origin(Any);
 
-    let state = AppState {};
+    let state = AppState {
+        finder: Finder::new(),
+    };
 
     let router = Router::new()
         .route("/", get(hello_world))

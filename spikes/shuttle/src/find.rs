@@ -1,5 +1,6 @@
 use geojson::{Feature, FeatureCollection, GeoJson, Geometry, Value};
 
+#[derive(Clone)]
 pub struct Finder {}
 
 impl Finder {
