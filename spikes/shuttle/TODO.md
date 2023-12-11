@@ -1,0 +1,13 @@
+- (/) get basic shuttle app defined
+  - (/) locally
+  - (/) remotely
+    - running as https://shuttle-spike.shuttleapp.rs
+- (/) get it returning some static GeoJson for Maine
+  - (/) locally
+  - (/) remotely
+- (/) get it returning json read from a file
+  - (/) locally
+  - (/) remotely
+- (/) get it returning showing GeoJson that represents all of Edinburgh
+  - (/) locally
+  - (/) remotely
