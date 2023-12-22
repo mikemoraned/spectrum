@@ -1,4 +1,4 @@
 [workspace]
 
-members = ["builder"]
+members = ["builder", "service"]
 resolver = "2"

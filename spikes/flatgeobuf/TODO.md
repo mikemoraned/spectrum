@@ -1,2 +1,4 @@
 - (/) get it able to build the same `find.json` file as the `regions` spike did
+- (x) write out same `find.json` as flatgeobuf file
+- (x) add logging lib
 - (x) ...
