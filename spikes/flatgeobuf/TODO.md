@@ -1,4 +1,7 @@
 - (/) get it able to build the same `find.json` file as the `regions` spike did
-- (x) write out same `find.json` as flatgeobuf file
+- (/) write out same `find.json` as flatgeobuf file `find.fgb`
+- (/) read `find.fgb` and live-convert it back into GeoJson
+- (x) restrict to current bounding box, on page load
+- (x) convert into shuttle.rs service
 - (x) add logging lib
 - (x) ...

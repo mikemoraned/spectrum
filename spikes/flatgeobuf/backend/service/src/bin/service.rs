@@ -15,7 +15,7 @@ async fn hello_world() -> &'static str {
 }
 
 async fn layers(State(state): State<AppState>) -> Json<GeoJson> {
-    Json(state.finder.find().unwrap())
+    Json(state.finder.find_flatgeobuf().unwrap())
 }
 
 #[tokio::main]
