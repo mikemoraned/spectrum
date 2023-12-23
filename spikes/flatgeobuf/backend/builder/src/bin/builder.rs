@@ -1,21 +1,11 @@
-use std::{
-    fs::File,
-    io::{BufWriter, Write},
-};
+use std::{fs::File, io::BufWriter};
 
 use builder::builder::build;
 use clap::Parser;
 use flatgeobuf::{FgbWriter, GeometryType};
 use geozero::{geojson::GeoJsonWriter, GeozeroGeometry};
 
-// use flatgeobuf::*;
-// use geo_types::Geometry;
-// use geojson::GeoJson;
-// use geozero::geojson::GeoJsonReader;
-// use geozero::{geo_types, GeozeroDatasource};
-// use std::convert::TryInto;
-
-/// Extract features from Openstreetmap and convert into single Flatgeobuf file
+/// Extract features from Openstreetmap and convert into single output file
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -54,21 +44,11 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     }
 
     if let Some(s) = args.fgb {
-        let mut fgb = FgbWriter::create("all", GeometryType::Polygon)?;
-        geom.process_geom(&mut fgb)?;
+        let mut fgb = FgbWriter::create("all", GeometryType::GeometryCollection)?;
+        fgb.add_feature_geom(geom, |_| {})?;
         let mut fout = BufWriter::new(File::create(s)?);
         fgb.write(&mut fout)?;
     }
-
-    // let geojson_string = serde_json::to_string_pretty(&geojson_json).unwrap();
-
-    // let mut f = OpenOptions::new()
-    //     .write(true)
-    //     .truncate(true)
-    //     .create(true)
-    //     .open("data/find.json")
-    //     .unwrap();
-    // f.write_all(geojson_string.as_bytes()).unwrap();
 
     Ok(())
 }

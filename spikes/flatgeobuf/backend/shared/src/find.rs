@@ -38,7 +38,7 @@ impl Finder {
 
         println!("bounds: {:?}", bounds);
 
-        match GeoAssets::get("find.fgb") {
+        match GeoAssets::get("all.fgb") {
             Some(f) => {
                 let reader = Cursor::new(f.data);
                 match FgbReader::open(reader) {
