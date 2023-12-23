@@ -1,0 +1,9 @@
+- (/) get it able to build the same `find.json` file as the `regions` spike did
+- (/) write out same `find.json` as flatgeobuf file `find.fgb`
+- (/) read `find.fgb` and live-convert it back into GeoJson
+- (/) restrict to current bounding box, on page load and on movement
+- (/) convert into shuttle.rs service
+- (/) switch builder to take openstreemap PBF file and output flatgeobuf FGB file
+- (/) switch builder to take multiple openstreemap PBF files and output single flatgeobuf FGB file
+- (x) add logging and tracing lib
+- (x) ...
