@@ -25,37 +25,40 @@ async function fetchLayers() {
   return geojson;
 }
 
-function handleViewChange() {
+async function initialiseSource() {
+  const source = {
+    type: "geojson",
+    data: null,
+  };
+
+  map.addSource("current", source);
+
+  map.addLayer({
+    id: "current",
+    type: "fill",
+    source: "current",
+    layout: {},
+    paint: {
+      "fill-color": "#0080ff", // blue color fill
+      "fill-opacity": 0.5,
+    },
+  });
+
+  updateSourceOnViewChange();
+}
+
+function updateSourceOnViewChange() {
   console.log("view changed");
   const bounds = map.getBounds();
   console.log("bounds, ", bounds);
+  console.log("triggering load of geojson");
+  fetchLayers().then((geojson) => {
+    console.log("geojson loaded");
+    const source = map.getSource("current");
+    source.setData(geojson);
+    console.log("source updated");
+  });
 }
 
-map.on("load", handleViewChange);
-map.on("moveend", handleViewChange);
-
-map.on("load", () => {
-  console.log("loading ...");
-
-  fetchLayers().then((geojson) => {
-    const source = {
-      type: "geojson",
-      data: geojson,
-    };
-
-    map.addSource("maine", source);
-
-    map.addLayer({
-      id: "maine",
-      type: "fill",
-      source: "maine", // reference the data source
-      layout: {},
-      paint: {
-        "fill-color": "#0080ff", // blue color fill
-        "fill-opacity": 0.5,
-      },
-    });
-  });
-
-  console.log("loading done");
-});
+map.on("load", initialiseSource);
+map.on("moveend", updateSourceOnViewChange);
