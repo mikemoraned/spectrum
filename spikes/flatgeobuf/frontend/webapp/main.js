@@ -25,6 +25,15 @@ async function fetchLayers() {
   return geojson;
 }
 
+function handleViewChange() {
+  console.log("view changed");
+  const bounds = map.getBounds();
+  console.log("bounds, ", bounds);
+}
+
+map.on("load", handleViewChange);
+map.on("moveend", handleViewChange);
+
 map.on("load", () => {
   console.log("loading ...");
 
