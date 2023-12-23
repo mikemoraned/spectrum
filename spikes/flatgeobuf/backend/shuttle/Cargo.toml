@@ -1,5 +1,5 @@
 [package]
-name = "flatgeobuf"
+name = "shuttle"
 version = "0.1.0"
 edition = "2021"
 
