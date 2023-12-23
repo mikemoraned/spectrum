@@ -20,7 +20,7 @@ async fn hello_world() -> &'static str {
 }
 
 async fn layers(State(state): State<AppState>, bounds: Query<Bounds>) -> Json<GeoJson> {
-    Json(state.finder.find_flatgeobuf(bounds.0).unwrap())
+    Json(state.finder.find(bounds.0).unwrap())
 }
 
 #[shuttle_runtime::main]
