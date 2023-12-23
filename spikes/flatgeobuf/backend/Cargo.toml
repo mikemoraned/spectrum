@@ -1,4 +1,4 @@
 [workspace]
 
-members = ["builder", "service", "shuttle"]
+members = ["builder", "shared", "shuttle"]
 resolver = "2"

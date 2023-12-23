@@ -1,16 +1,13 @@
 [package]
-name = "service"
+name = "shared"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+
 [dependencies]
-axum = "0.6.20"
-tokio = { version = "1.28.2", features = ["full"] }
-tracing = "0.1.40"
-tower = "0.4"
-tower-http = { version = "0.4", features = ["cors"] }
 geojson = "0.24"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
