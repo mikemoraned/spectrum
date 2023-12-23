@@ -3,7 +3,7 @@
 - (/) read `find.fgb` and live-convert it back into GeoJson
 - (/) restrict to current bounding box, on page load and on movement
 - (/) convert into shuttle.rs service
-- (x) switch builder to take openstreemap PBF file and output flatgeobuf FGB file
-- (x) switch builder to take multiple openstreemap PBF files and output single flatgeobuf FGB file
+- (/) switch builder to take openstreemap PBF file and output flatgeobuf FGB file
+- (/) switch builder to take multiple openstreemap PBF files and output single flatgeobuf FGB file
 - (x) add logging and tracing lib
 - (x) ...

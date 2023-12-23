@@ -4,7 +4,7 @@ use geojson::{Feature, FeatureCollection, GeoJson, Geometry, Position, Value};
 use osmpbf::{Element, IndexedReader};
 
 pub fn build(path: String) -> Result<GeoJson, ()> {
-    // let mut reader = IndexedReader::from_path("data/edinburgh_scotland.osm.pbf").unwrap();
+    println!("processing {}", path);
     let mut reader = IndexedReader::from_path(path).unwrap();
 
     fn way_filter(way: &osmpbf::Way<'_>) -> bool {

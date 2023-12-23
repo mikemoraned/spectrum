@@ -11,7 +11,7 @@ use geozero::{geojson::GeoJsonWriter, GeozeroGeometry};
 struct Args {
     /// input Openstreetmap `.pbf` path
     #[arg(short, long)]
-    pbf: String,
+    pbf: Vec<String>,
 
     /// output GeoJSON `.geojson` file
     #[arg(short, long)]
@@ -24,28 +24,36 @@ struct Args {
 
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
+    let mut geoms = vec![];
 
-    let geojson = build(args.pbf).unwrap();
+    for input in args.pbf {
+        let geojson = build(input).unwrap();
 
-    let geom: geo_types::Geometry<f64> = geojson.try_into().unwrap();
-    match &geom {
-        geo_types::Geometry::GeometryCollection(c) => {
-            println!("GeometryCollection with {} elements", c.0.len());
+        let geom: geo_types::Geometry<f64> = geojson.try_into().unwrap();
+        match &geom {
+            geo_types::Geometry::GeometryCollection(c) => {
+                println!("GeometryCollection with {} elements", c.0.len());
+            }
+            _ => {
+                println!("some other type");
+            }
         }
-        _ => {
-            println!("some other type");
-        }
+        geoms.push(geom);
     }
 
     if let Some(s) = args.geojson {
         let fout = BufWriter::new(File::create(s)?);
         let mut gout = GeoJsonWriter::new(fout);
-        geom.process_geom(&mut gout)?;
+        for geom in geoms.iter() {
+            geom.process_geom(&mut gout)?;
+        }
     }
 
     if let Some(s) = args.fgb {
         let mut fgb = FgbWriter::create("all", GeometryType::GeometryCollection)?;
-        fgb.add_feature_geom(geom, |_| {})?;
+        for geom in geoms.iter() {
+            fgb.add_feature_geom(geom.clone(), |_| {})?;
+        }
         let mut fout = BufWriter::new(File::create(s)?);
         fgb.write(&mut fout)?;
     }
