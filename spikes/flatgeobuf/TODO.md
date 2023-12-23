@@ -2,6 +2,6 @@
 - (/) write out same `find.json` as flatgeobuf file `find.fgb`
 - (/) read `find.fgb` and live-convert it back into GeoJson
 - (/) restrict to current bounding box, on page load and on movement
-- (x) convert into shuttle.rs service
+- (/) convert into shuttle.rs service
 - (x) add logging lib
 - (x) ...
