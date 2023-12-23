@@ -16,8 +16,11 @@ const map = new mapboxgl.Map({
   ...starting_position,
 });
 
-async function fetchLayers() {
-  const service_url = `${import.meta.env.VITE_SERVICE_BASE_URL}/layers`;
+async function fetchLayers(bounds) {
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast();
+  const q = `?sw_lat=${sw.lat}&sw_lon=${sw.lng}&ne_lat=${ne.lat}&ne_lon=${ne.lng}`;
+  const service_url = `${import.meta.env.VITE_SERVICE_BASE_URL}/layers${q}`;
   console.log("calling service ", service_url, " ...");
   const response = await fetch(service_url);
   const geojson = response.json();
@@ -52,7 +55,7 @@ function updateSourceOnViewChange() {
   const bounds = map.getBounds();
   console.log("bounds, ", bounds);
   console.log("triggering load of geojson");
-  fetchLayers().then((geojson) => {
+  fetchLayers(bounds).then((geojson) => {
     console.log("geojson loaded");
     const source = map.getSource("current");
     source.setData(geojson);

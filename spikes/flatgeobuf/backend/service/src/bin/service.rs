@@ -1,8 +1,13 @@
 use std::sync::Arc;
 
-use axum::{extract::State, http::Method, routing::get, Json, Router};
+use axum::{
+    extract::{Query, State},
+    http::Method,
+    routing::get,
+    Json, Router,
+};
 use geojson::GeoJson;
-use service::find::Finder;
+use service::find::{Bounds, Finder};
 use tower_http::cors::{Any, CorsLayer};
 
 #[derive(Clone)]
@@ -14,8 +19,8 @@ async fn hello_world() -> &'static str {
     "Hello, world!"
 }
 
-async fn layers(State(state): State<AppState>) -> Json<GeoJson> {
-    Json(state.finder.find_flatgeobuf().unwrap())
+async fn layers(State(state): State<AppState>, bounds: Query<Bounds>) -> Json<GeoJson> {
+    Json(state.finder.find_flatgeobuf(bounds.0).unwrap())
 }
 
 #[tokio::main]
