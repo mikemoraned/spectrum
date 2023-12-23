@@ -5,5 +5,8 @@
 - (/) convert into shuttle.rs service
 - (/) switch builder to take openstreemap PBF file and output flatgeobuf FGB file
 - (/) switch builder to take multiple openstreemap PBF files and output single flatgeobuf FGB file
+- load FGB using a remote URL
+  - (/) using generic sample https://flatgeobuf.org/test/data/countries.fgb
+  - (x) bespoke data hosted on cloudflare
 - (x) add logging and tracing lib
 - (x) ...

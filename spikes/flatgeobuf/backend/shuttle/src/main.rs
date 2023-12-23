@@ -7,7 +7,7 @@ use axum::{
     Json, Router,
 };
 use geojson::GeoJson;
-use shared::find::{Bounds, Finder};
+use shared::find::{find_remote, Bounds, Finder};
 use tower_http::cors::{Any, CorsLayer};
 
 #[derive(Clone)]
@@ -20,7 +20,7 @@ async fn hello_world() -> &'static str {
 }
 
 async fn layers(State(state): State<AppState>, bounds: Query<Bounds>) -> Json<GeoJson> {
-    Json(state.finder.find(bounds.0).unwrap())
+    Json(find_remote(bounds.0).await.unwrap())
 }
 
 #[shuttle_runtime::main]

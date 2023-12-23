@@ -1,4 +1,7 @@
+use std::io::Cursor;
+
 use geojson::GeoJson;
+use geozero::geojson::GeoJsonWriter;
 use serde::Deserialize;
 
 use crate::geo_assets::GeoAssets;
@@ -21,7 +24,6 @@ impl Finder {
     pub fn find(&self, bounds: Bounds) -> Result<GeoJson, ()> {
         use flatgeobuf::*;
         use geozero::ProcessToJson;
-        use std::io::Cursor;
 
         println!("bounds: {:?}", bounds);
 
@@ -48,5 +50,29 @@ impl Finder {
             }
             None => Err(()),
         }
+    }
+}
+
+pub async fn find_remote(bounds: Bounds) -> Result<GeoJson, ()> {
+    use flatgeobuf::*;
+
+    let mut fgb = HttpFgbReader::open("https://flatgeobuf.org/test/data/countries.fgb")
+        .await
+        .unwrap()
+        .select_bbox(bounds.sw_lon, bounds.sw_lat, bounds.ne_lon, bounds.ne_lat)
+        .await
+        .unwrap();
+
+    let mut buf = vec![];
+    let cursor = Cursor::new(&mut buf);
+    let mut gout = GeoJsonWriter::new(cursor);
+    fgb.process_features(&mut gout).await.unwrap();
+
+    match String::from_utf8(buf) {
+        Ok(s) => match s.parse::<GeoJson>() {
+            Ok(geojson) => Ok(geojson),
+            Err(_) => Err(()),
+        },
+        Err(_) => Err(()),
     }
 }
