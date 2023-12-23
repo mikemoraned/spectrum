@@ -53,21 +53,25 @@ impl Finder {
     }
 }
 
-pub async fn find_remote(bounds: Bounds) -> Result<GeoJson, ()> {
+pub async fn find_remote(bounds: Bounds, flatgeobuf_url: String) -> Result<GeoJson, ()> {
     use flatgeobuf::*;
 
-    let mut fgb = HttpFgbReader::open("https://flatgeobuf.org/test/data/countries.fgb")
+    println!("getting from url {}", flatgeobuf_url);
+    let mut fgb = HttpFgbReader::open(&flatgeobuf_url)
         .await
         .unwrap()
         .select_bbox(bounds.sw_lon, bounds.sw_lat, bounds.ne_lon, bounds.ne_lat)
         .await
         .unwrap();
 
+    println!("converting to geojson string");
+
     let mut buf = vec![];
     let cursor = Cursor::new(&mut buf);
     let mut gout = GeoJsonWriter::new(cursor);
     fgb.process_features(&mut gout).await.unwrap();
 
+    println!("converting to geojson object");
     match String::from_utf8(buf) {
         Ok(s) => match s.parse::<GeoJson>() {
             Ok(geojson) => Ok(geojson),
