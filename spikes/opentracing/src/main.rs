@@ -21,10 +21,9 @@ async fn some_number() -> u8 {
     42
 }
 
-#[tokio::main]
-async fn main() {
+fn setup_tracing_and_logging(service_name: &str) {
     let tracer = opentelemetry_jaeger::new_pipeline()
-        .with_service_name("opentelemetry-example")
+        .with_service_name(service_name)
         .install_simple()
         .unwrap();
     let opentelemetry = tracing_opentelemetry::layer().with_tracer(tracer);
@@ -33,6 +32,11 @@ async fn main() {
         .with(fmt::Layer::default())
         .try_init()
         .unwrap();
+}
+
+#[tokio::main]
+async fn main() {
+    setup_tracing_and_logging("opentelemetry-example");
 
     info!("Hello, world!");
 
