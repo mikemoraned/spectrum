@@ -1,16 +1,19 @@
 use axum::{routing::get, Router};
-use tracing::{debug, info, trace};
+use tracing::{debug, info, instrument, trace};
 
+#[instrument]
 async fn single_level() -> &'static str {
     trace!("single_level");
     "Hello, World!"
 }
 
+#[instrument]
 async fn multi_level() -> String {
     trace!("multi_level");
     format!("the answer is {}", some_number().await)
 }
 
+#[instrument]
 async fn some_number() -> u8 {
     trace!("some_number");
     42
