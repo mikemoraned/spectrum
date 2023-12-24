@@ -8,6 +8,7 @@ use axum::{
 };
 use geojson::GeoJson;
 use opentelemetry::trace::{Tracer, TracerProvider as _};
+use opentelemetry_otlp::{Protocol, WithExportConfig};
 use opentelemetry_sdk::trace::TracerProvider;
 use shared::find::{find_remote, Bounds, Finder};
 use shuttle_secrets::SecretStore;
@@ -42,6 +43,8 @@ async fn main(#[shuttle_secrets::Secrets] secret_store: SecretStore) -> shuttle_
     // let exporter = opentelemetry_stdout::SpanExporter::default();
     let span_exporter = opentelemetry_otlp::new_exporter()
         .http()
+        .with_endpoint(secret_store.get("OTEL_EXPORTER_OTLP_ENDPOINT").unwrap())
+        .with_protocol(Protocol::HttpBinary)
         .build_span_exporter()
         .unwrap();
     let provider = TracerProvider::builder()
