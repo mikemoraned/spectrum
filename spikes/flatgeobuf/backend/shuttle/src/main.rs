@@ -7,11 +7,16 @@ use axum::{
     Json, Router,
 };
 use geojson::GeoJson;
+use opentelemetry::trace::{Tracer, TracerProvider as _};
+use opentelemetry_sdk::trace::TracerProvider;
 use shared::find::{find_remote, Bounds, Finder};
 use shuttle_secrets::SecretStore;
 use tower_http::cors::{Any, CorsLayer};
 use tracing::instrument;
+use tracing::{error, span};
+use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::prelude::*;
+use tracing_subscriber::Registry;
 
 #[derive(Clone, Debug)]
 struct AppState {
@@ -34,10 +39,16 @@ async fn main(#[shuttle_secrets::Secrets] secret_store: SecretStore) -> shuttle_
     let fmt_layer = tracing_subscriber::fmt::layer();
     let filter_layer =
         tracing_subscriber::EnvFilter::try_new(log_level).expect("failed to set log level");
+    let provider = TracerProvider::builder()
+        .with_simple_exporter(opentelemetry_stdout::SpanExporter::default())
+        .build();
+    let tracer = provider.tracer("shuttle");
+    let telemetry_layer = tracing_opentelemetry::layer().with_tracer(tracer);
 
     tracing_subscriber::registry()
         .with(filter_layer)
         .with(fmt_layer)
+        .with(telemetry_layer)
         .init();
 
     let cors = CorsLayer::new()
