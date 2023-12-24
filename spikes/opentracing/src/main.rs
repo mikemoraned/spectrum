@@ -1,5 +1,4 @@
 use axum::{routing::get, Router};
-use opentelemetry::global;
 use tracing::{debug, info, instrument, trace};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
