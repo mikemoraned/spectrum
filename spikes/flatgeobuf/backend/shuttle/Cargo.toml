@@ -24,6 +24,12 @@ opentelemetry_sdk = { version = "0.21", default-features = false, features = [
 ] }
 opentelemetry-jaeger = "0.20"
 opentelemetry-stdout = { version = "0.2", features = ["trace", "metrics"] }
-opentelemetry-otlp = { version = "0.14", features = ["metrics"] }
+opentelemetry-otlp = { version = "0.14", features = [
+    "metrics",
+    "http-proto",
+    "reqwest-client",
+    "reqwest-rustls",
+] }
+opentelemetry-http = "0.10"
 opentelemetry-semantic-conventions = "0.13"
 tracing-opentelemetry = "0.22"

@@ -39,8 +39,13 @@ async fn main(#[shuttle_secrets::Secrets] secret_store: SecretStore) -> shuttle_
     let fmt_layer = tracing_subscriber::fmt::layer();
     let filter_layer =
         tracing_subscriber::EnvFilter::try_new(log_level).expect("failed to set log level");
+    // let exporter = opentelemetry_stdout::SpanExporter::default();
+    let span_exporter = opentelemetry_otlp::new_exporter()
+        .http()
+        .build_span_exporter()
+        .unwrap();
     let provider = TracerProvider::builder()
-        .with_simple_exporter(opentelemetry_stdout::SpanExporter::default())
+        .with_simple_exporter(span_exporter)
         .build();
     let tracer = provider.tracer("shuttle");
     let telemetry_layer = tracing_opentelemetry::layer().with_tracer(tracer);
