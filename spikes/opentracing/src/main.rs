@@ -24,14 +24,16 @@ async fn some_number() -> u8 {
 }
 
 fn setup_tracing_and_logging(service_name: &str) {
+    use opentelemetry_semantic_conventions as semconv;
+
     let otlp_exporter = opentelemetry_otlp::new_exporter().tonic();
+    let resource = Resource::new(vec![
+        semconv::resource::SERVICE_NAME.string(service_name.to_string())
+    ]);
     let tracer = opentelemetry_otlp::new_pipeline()
         .tracing()
         .with_exporter(otlp_exporter)
-        .with_trace_config(
-            Config::default()
-                .with_resource(Resource::new(vec![KeyValue::new("service.name", "foop")])),
-        )
+        .with_trace_config(Config::default().with_resource(resource))
         .install_simple()
         .unwrap();
 
