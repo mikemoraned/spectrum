@@ -5,6 +5,7 @@ use geozero::geojson::GeoJsonWriter;
 use serde::Deserialize;
 
 use crate::geo_assets::GeoAssets;
+use tracing::{debug, instrument};
 
 #[derive(Deserialize, Debug)]
 pub struct Bounds {
@@ -14,6 +15,7 @@ pub struct Bounds {
     ne_lon: f64,
 }
 
+#[derive(Debug)]
 pub struct Finder {}
 
 impl Finder {
@@ -53,10 +55,11 @@ impl Finder {
     }
 }
 
+#[instrument]
 pub async fn find_remote(bounds: Bounds, flatgeobuf_url: String) -> Result<GeoJson, ()> {
     use flatgeobuf::*;
 
-    println!("getting from url {}", flatgeobuf_url);
+    debug!("getting from url {}", flatgeobuf_url);
     let mut fgb = HttpFgbReader::open(&flatgeobuf_url)
         .await
         .unwrap()
@@ -64,14 +67,14 @@ pub async fn find_remote(bounds: Bounds, flatgeobuf_url: String) -> Result<GeoJs
         .await
         .unwrap();
 
-    println!("converting to geojson string");
+    debug!("converting to geojson string");
 
     let mut buf = vec![];
     let cursor = Cursor::new(&mut buf);
     let mut gout = GeoJsonWriter::new(cursor);
     fgb.process_features(&mut gout).await.unwrap();
 
-    println!("converting to geojson object");
+    debug!("converting to geojson object");
     match String::from_utf8(buf) {
         Ok(s) => match s.parse::<GeoJson>() {
             Ok(geojson) => Ok(geojson),
