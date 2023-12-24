@@ -22,7 +22,7 @@ async fn some_number() -> u8 {
     42
 }
 
-fn setup_tracing_and_logging(service_name: &str) {
+fn setup_tracing_and_logging(service_name: &str, fmt_filter: EnvFilter) {
     use opentelemetry_semantic_conventions as semconv;
 
     let otlp_exporter = opentelemetry_otlp::new_exporter().tonic();
@@ -37,7 +37,7 @@ fn setup_tracing_and_logging(service_name: &str) {
         .unwrap();
 
     let opentelemetry_layer = tracing_opentelemetry::layer().with_tracer(tracer);
-    let fmt_layer = fmt::layer().with_filter(EnvFilter::from_default_env());
+    let fmt_layer = fmt::layer().with_filter(fmt_filter);
     tracing_subscriber::registry()
         .with(opentelemetry_layer)
         .with(fmt_layer)
@@ -47,7 +47,7 @@ fn setup_tracing_and_logging(service_name: &str) {
 
 #[tokio::main]
 async fn main() {
-    setup_tracing_and_logging("opentelemetry-example");
+    setup_tracing_and_logging("opentelemetry-example", EnvFilter::from_default_env());
 
     info!("Hello, world!");
 
