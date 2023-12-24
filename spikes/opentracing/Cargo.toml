@@ -11,5 +11,6 @@ tokio = { version = "1.35", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 opentelemetry = "0.21"
-tracing-opentelemetry = "0.22"
-opentelemetry-jaeger = "0.20"
+opentelemetry_sdk = "0.21.1"
+tracing-opentelemetry = "0.22.0"
+opentelemetry-otlp = "0.14"

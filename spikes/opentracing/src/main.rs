@@ -1,4 +1,7 @@
 use axum::{routing::get, Router};
+use opentelemetry::KeyValue;
+use opentelemetry_sdk::trace::Config;
+use opentelemetry_sdk::Resource;
 use tracing::{debug, info, instrument, trace};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -21,10 +24,17 @@ async fn some_number() -> u8 {
 }
 
 fn setup_tracing_and_logging(service_name: &str) {
-    let tracer = opentelemetry_jaeger::new_agent_pipeline()
-        .with_service_name(service_name)
+    let otlp_exporter = opentelemetry_otlp::new_exporter().tonic();
+    let tracer = opentelemetry_otlp::new_pipeline()
+        .tracing()
+        .with_exporter(otlp_exporter)
+        .with_trace_config(
+            Config::default()
+                .with_resource(Resource::new(vec![KeyValue::new("service.name", "foop")])),
+        )
         .install_simple()
         .unwrap();
+
     let opentelemetry = tracing_opentelemetry::layer().with_tracer(tracer);
     tracing_subscriber::registry()
         .with(opentelemetry)
