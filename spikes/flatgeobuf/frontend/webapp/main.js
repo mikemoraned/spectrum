@@ -5,8 +5,8 @@ const edinburgh = [-3.188267, 55.953251];
 const gera = [12.079811, 50.884842];
 const maine = [-68.137343, 45.137451];
 const starting_position = {
-  // center: gera,
-  center: edinburgh,
+  center: gera,
+  // center: edinburgh,
   // center: maine,
   zoom: 12,
   // zoom: 5,

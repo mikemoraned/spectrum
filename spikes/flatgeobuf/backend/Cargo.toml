@@ -2,3 +2,15 @@
 
 members = ["builder", "shared", "shuttle"]
 resolver = "2"
+
+[workspace.dependencies]
+# flatgeobuf = "4.0"
+# for now, track git rev for flatgeobuf because published 4.0 seems to have a bug that
+# manifests as follows when accessing a remote FGB file:
+# ```
+# thread 'tokio-runtime-worker' panicked at /Users/mxm/.cargo/registry/src/index.crates.io-6f17d22bba15001f/flatgeobuf-4.0.0/src/packed_r_tree.rs:624:25:
+# assertion `left == right` failed
+#  left: 1
+# right: 2
+# ```
+flatgeobuf = { git = "https://github.com/flatgeobuf/flatgeobuf.git", rev = "a63b3e4" }

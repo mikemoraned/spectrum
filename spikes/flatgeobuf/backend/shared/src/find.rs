@@ -1,4 +1,7 @@
+use std::io::Cursor;
+
 use geojson::GeoJson;
+use geozero::geojson::GeoJsonWriter;
 use serde::Deserialize;
 
 use crate::geo_assets::GeoAssets;
@@ -18,23 +21,9 @@ impl Finder {
         Finder {}
     }
 
-    pub fn find(&self) -> Result<GeoJson, ()> {
-        match GeoAssets::get("find.json") {
-            Some(f) => match String::from_utf8(f.data.to_vec()) {
-                Ok(s) => match s.parse::<GeoJson>() {
-                    Ok(geojson) => Ok(geojson),
-                    Err(_) => Err(()),
-                },
-                Err(_) => Err(()),
-            },
-            None => Err(()),
-        }
-    }
-
-    pub fn find_flatgeobuf(&self, bounds: Bounds) -> Result<GeoJson, ()> {
+    pub fn find(&self, bounds: Bounds) -> Result<GeoJson, ()> {
         use flatgeobuf::*;
         use geozero::ProcessToJson;
-        use std::io::Cursor;
 
         println!("bounds: {:?}", bounds);
 
@@ -61,5 +50,33 @@ impl Finder {
             }
             None => Err(()),
         }
+    }
+}
+
+pub async fn find_remote(bounds: Bounds, flatgeobuf_url: String) -> Result<GeoJson, ()> {
+    use flatgeobuf::*;
+
+    println!("getting from url {}", flatgeobuf_url);
+    let mut fgb = HttpFgbReader::open(&flatgeobuf_url)
+        .await
+        .unwrap()
+        .select_bbox(bounds.sw_lon, bounds.sw_lat, bounds.ne_lon, bounds.ne_lat)
+        .await
+        .unwrap();
+
+    println!("converting to geojson string");
+
+    let mut buf = vec![];
+    let cursor = Cursor::new(&mut buf);
+    let mut gout = GeoJsonWriter::new(cursor);
+    fgb.process_features(&mut gout).await.unwrap();
+
+    println!("converting to geojson object");
+    match String::from_utf8(buf) {
+        Ok(s) => match s.parse::<GeoJson>() {
+            Ok(geojson) => Ok(geojson),
+            Err(_) => Err(()),
+        },
+        Err(_) => Err(()),
     }
 }

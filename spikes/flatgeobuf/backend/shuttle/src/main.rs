@@ -7,12 +7,14 @@ use axum::{
     Json, Router,
 };
 use geojson::GeoJson;
-use shared::find::{Bounds, Finder};
+use shared::find::{find_remote, Bounds, Finder};
+use shuttle_secrets::SecretStore;
 use tower_http::cors::{Any, CorsLayer};
 
 #[derive(Clone)]
 struct AppState {
     finder: Arc<Finder>,
+    flatgeobuf_url: String,
 }
 
 async fn hello_world() -> &'static str {
@@ -20,11 +22,11 @@ async fn hello_world() -> &'static str {
 }
 
 async fn layers(State(state): State<AppState>, bounds: Query<Bounds>) -> Json<GeoJson> {
-    Json(state.finder.find_flatgeobuf(bounds.0).unwrap())
+    Json(find_remote(bounds.0, state.flatgeobuf_url).await.unwrap())
 }
 
 #[shuttle_runtime::main]
-async fn main() -> shuttle_axum::ShuttleAxum {
+async fn main(#[shuttle_secrets::Secrets] secret_store: SecretStore) -> shuttle_axum::ShuttleAxum {
     let cors = CorsLayer::new()
         .allow_methods([Method::GET])
         // allow requests from any origin
@@ -32,6 +34,7 @@ async fn main() -> shuttle_axum::ShuttleAxum {
 
     let state = AppState {
         finder: Arc::new(Finder::new()),
+        flatgeobuf_url: secret_store.get("FLATGEOBUF_URL").unwrap(),
     };
 
     let router = Router::new()
