@@ -1,9 +1,8 @@
 use axum::{routing::get, Router};
-use opentelemetry::KeyValue;
 use opentelemetry_sdk::trace::Config;
 use opentelemetry_sdk::Resource;
 use tracing::{debug, info, instrument, trace};
-use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
 
 #[instrument]
 async fn single_level() -> &'static str {
@@ -37,10 +36,11 @@ fn setup_tracing_and_logging(service_name: &str) {
         .install_simple()
         .unwrap();
 
-    let opentelemetry = tracing_opentelemetry::layer().with_tracer(tracer);
+    let opentelemetry_layer = tracing_opentelemetry::layer().with_tracer(tracer);
+    let fmt_layer = fmt::layer().with_filter(EnvFilter::from_default_env());
     tracing_subscriber::registry()
-        .with(opentelemetry)
-        .with(fmt::Layer::default())
+        .with(opentelemetry_layer)
+        .with(fmt_layer)
         .try_init()
         .unwrap();
 }
