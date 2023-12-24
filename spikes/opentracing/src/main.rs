@@ -1,5 +1,7 @@
 use axum::{routing::get, Router};
+use opentelemetry::global;
 use tracing::{debug, info, instrument, trace};
+use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[instrument]
 async fn single_level() -> &'static str {
@@ -21,7 +23,16 @@ async fn some_number() -> u8 {
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt::init();
+    let tracer = opentelemetry_jaeger::new_pipeline()
+        .with_service_name("opentelemetry-example")
+        .install_simple()
+        .unwrap();
+    let opentelemetry = tracing_opentelemetry::layer().with_tracer(tracer);
+    tracing_subscriber::registry()
+        .with(opentelemetry)
+        .with(fmt::Layer::default())
+        .try_init()
+        .unwrap();
 
     info!("Hello, world!");
 
