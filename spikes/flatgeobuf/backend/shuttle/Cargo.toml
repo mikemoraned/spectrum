@@ -17,19 +17,6 @@ tracing-subscriber = { workspace = true }
 tower = "0.4"
 tower-http = { version = "0.4", features = ["cors"] }
 shared = { path = "../shared" }
-opentelemetry = { version = "0.21", features = ["trace", "metrics"] }
-opentelemetry_sdk = { version = "0.21", default-features = false, features = [
-    "trace",
-    "rt-tokio",
-] }
-opentelemetry-jaeger = "0.20"
-opentelemetry-stdout = { version = "0.2", features = ["trace", "metrics"] }
-opentelemetry-otlp = { version = "0.14", features = [
-    "metrics",
-    "http-proto",
-    "reqwest-client",
-    "reqwest-rustls",
-] }
-opentelemetry-http = "0.10"
-opentelemetry-semantic-conventions = "0.13"
-tracing-opentelemetry = "0.22"
+opentelemetry = "0.17"
+tracing-opentelemetry = "0.17.2"
+opentelemetry-jaeger = "0.16"
