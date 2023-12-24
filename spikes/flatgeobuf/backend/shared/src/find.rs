@@ -1,11 +1,12 @@
 use std::io::Cursor;
 
+use flatgeobuf::{AsyncFeatureIter, HttpFgbReader};
 use geojson::GeoJson;
 use geozero::geojson::GeoJsonWriter;
 use serde::Deserialize;
 
 use crate::geo_assets::GeoAssets;
-use tracing::{debug, instrument};
+use tracing::{debug, instrument, span, Level};
 
 #[derive(Deserialize, Debug)]
 pub struct Bounds {
@@ -60,21 +61,38 @@ pub async fn find_remote(bounds: Bounds, flatgeobuf_url: String) -> Result<GeoJs
     use flatgeobuf::*;
 
     debug!("getting from url {}", flatgeobuf_url);
-    let mut fgb = HttpFgbReader::open(&flatgeobuf_url)
-        .await
-        .unwrap()
+    let reader = open_reader(flatgeobuf_url).await;
+    let fgb: AsyncFeatureIter = select_bbox(reader, bounds).await;
+    let buf = convert_to_geojson_string(fgb).await;
+    convert_to_geojson_object(buf)
+}
+
+#[instrument]
+async fn open_reader(flatgeobuf_url: String) -> HttpFgbReader {
+    HttpFgbReader::open(&flatgeobuf_url).await.unwrap()
+}
+
+async fn select_bbox(reader: HttpFgbReader, bounds: Bounds) -> AsyncFeatureIter {
+    let span = span!(Level::TRACE, "select_bbox", bounds = ?bounds);
+    let _enter = span.enter();
+    reader
         .select_bbox(bounds.sw_lon, bounds.sw_lat, bounds.ne_lon, bounds.ne_lat)
         .await
-        .unwrap();
+        .unwrap()
+}
 
-    debug!("converting to geojson string");
-
+async fn convert_to_geojson_string(mut fgb: AsyncFeatureIter) -> Vec<u8> {
+    let span = span!(Level::TRACE, "convert_to_geojson_string");
+    let _enter = span.enter();
     let mut buf = vec![];
     let cursor = Cursor::new(&mut buf);
     let mut gout = GeoJsonWriter::new(cursor);
     fgb.process_features(&mut gout).await.unwrap();
+    buf
+}
 
-    debug!("converting to geojson object");
+#[instrument]
+fn convert_to_geojson_object(buf: Vec<u8>) -> Result<GeoJson, ()> {
     match String::from_utf8(buf) {
         Ok(s) => match s.parse::<GeoJson>() {
             Ok(geojson) => Ok(geojson),

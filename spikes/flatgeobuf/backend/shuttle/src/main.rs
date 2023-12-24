@@ -29,7 +29,7 @@ async fn layers(State(state): State<AppState>, bounds: Query<Bounds>) -> Json<Ge
 }
 
 fn setup_tracing_and_logging(service_name: &str) {
-    let tracer = opentelemetry_jaeger::new_pipeline()
+    let tracer = opentelemetry_jaeger::new_agent_pipeline()
         .with_service_name(service_name)
         .install_simple()
         .unwrap();
