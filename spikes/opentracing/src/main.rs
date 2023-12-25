@@ -33,7 +33,7 @@ fn setup_tracing_and_logging(service_name: &str, fmt_filter: EnvFilter) {
         .tracing()
         .with_exporter(otlp_exporter)
         .with_trace_config(Config::default().with_resource(resource))
-        .install_simple()
+        .install_batch(opentelemetry_sdk::runtime::Tokio)
         .unwrap();
 
     let opentelemetry_layer = tracing_opentelemetry::layer().with_tracer(tracer);
