@@ -1,4 +1,4 @@
-use std::{str::FromStr, sync::Arc};
+use std::str::FromStr;
 
 use axum::{
     extract::{Query, State},
@@ -8,7 +8,7 @@ use axum::{
 };
 use geojson::GeoJson;
 use opentelemetry_sdk::{trace::Config, Resource};
-use shared::find::{find_remote, Bounds, Finder};
+use shared::find::{find_remote, Bounds};
 use shuttle_secrets::SecretStore;
 use tower_http::cors::{Any, CorsLayer};
 use tracing::instrument;
@@ -16,7 +16,6 @@ use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, Env
 
 #[derive(Clone, Debug)]
 struct AppState {
-    finder: Arc<Finder>,
     flatgeobuf_url: String,
 }
 
@@ -24,7 +23,7 @@ async fn hello_world() -> &'static str {
     "Hello, world!"
 }
 
-#[instrument]
+#[instrument(skip(state, bounds))]
 async fn layers(State(state): State<AppState>, bounds: Query<Bounds>) -> Json<GeoJson> {
     Json(find_remote(bounds.0, state.flatgeobuf_url).await.unwrap())
 }
@@ -40,7 +39,7 @@ fn setup_tracing_and_logging(service_name: &str, fmt_filter: EnvFilter) {
         .tracing()
         .with_exporter(otlp_exporter)
         .with_trace_config(Config::default().with_resource(resource))
-        .install_simple()
+        .install_batch(opentelemetry_sdk::runtime::Tokio)
         .unwrap();
 
     let opentelemetry_layer = tracing_opentelemetry::layer().with_tracer(tracer);
@@ -63,7 +62,6 @@ async fn main(#[shuttle_secrets::Secrets] secret_store: SecretStore) -> shuttle_
         .allow_origin(Any);
 
     let state = AppState {
-        finder: Arc::new(Finder::new()),
         flatgeobuf_url: secret_store.get("FLATGEOBUF_URL").unwrap(),
     };
 
