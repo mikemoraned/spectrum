@@ -9,6 +9,7 @@
   - (/) using generic sample https://flatgeobuf.org/test/data/countries.fgb
   - (/) bespoke data hosted on ~cloudflare~ bunny CDN
 - optimise
-  - (x) add logging and tracing lib
+  - (/) add logging and tracing lib
+  - (x) export via opentelemetry to third-party
   - (x) ...
 - (x) ...

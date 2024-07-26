@@ -2,9 +2,10 @@ use std::collections::{HashMap, HashSet};
 
 use geojson::{Feature, FeatureCollection, GeoJson, Geometry, Position, Value};
 use osmpbf::{Element, IndexedReader};
+use tracing::{debug, instrument};
 
+#[instrument]
 pub fn build(path: String) -> Result<GeoJson, ()> {
-    println!("processing {}", path);
     let mut reader = IndexedReader::from_path(path).unwrap();
 
     fn way_filter(way: &osmpbf::Way<'_>) -> bool {
@@ -52,7 +53,7 @@ pub fn build(path: String) -> Result<GeoJson, ()> {
     let mut pending_refs_for_ways: HashMap<i64, Vec<i64>> = HashMap::new();
     let mut pending_ways_for_refs: HashMap<i64, Vec<i64>> = HashMap::new();
 
-    println!("Finding pending ways");
+    debug!("Finding pending ways");
     reader
         .read_ways_and_deps(way_filter, |element| match element {
             Element::Way(way) => {
@@ -68,9 +69,9 @@ pub fn build(path: String) -> Result<GeoJson, ()> {
         })
         .unwrap();
 
-    println!("Found {} pending ways", pending_refs_for_ways.len());
+    debug!("Found {} pending ways", pending_refs_for_ways.len());
 
-    println!("Finding positions for ways");
+    debug!("Finding positions for ways");
     let mut positions_for_way: HashMap<i64, Vec<Position>> = HashMap::new();
     for (way_id, pending_refs) in pending_refs_for_ways.iter() {
         let mut positions: Vec<Position> = Vec::new();
@@ -123,10 +124,9 @@ pub fn build(path: String) -> Result<GeoJson, ()> {
         })
         .unwrap();
 
-    println!("Found positions for ways");
+    debug!("Found positions for ways");
 
-    println!("Creating features");
-
+    debug!("Creating features");
     let mut features = vec![];
     for (_way_id, positions) in positions_for_way.iter() {
         let geometry = Geometry::new(Value::Polygon(vec![positions.clone()]));
@@ -138,15 +138,15 @@ pub fn build(path: String) -> Result<GeoJson, ()> {
             foreign_members: None,
         });
     }
-    println!("Created {} features", features.len());
+    debug!("Created {} features", features.len());
 
-    println!("Creating feature collection");
+    debug!("Creating feature collection");
     let geojson = GeoJson::FeatureCollection(FeatureCollection {
         bbox: None,
         features,
         foreign_members: None,
     });
-    println!("Created feature collection");
+    debug!("Created feature collection");
 
     Ok(geojson)
 }

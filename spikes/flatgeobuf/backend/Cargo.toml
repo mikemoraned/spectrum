@@ -14,3 +14,5 @@ resolver = "2"
 # right: 2
 # ```
 flatgeobuf = { git = "https://github.com/flatgeobuf/flatgeobuf.git", rev = "a63b3e4" }
+tracing = "0.1"
+tracing-subscriber = "0.3"
