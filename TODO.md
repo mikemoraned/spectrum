@@ -37,13 +37,15 @@ flowchart TB
 
 - (x) v0.1: show regions
   - (x) webapp
-    - (x) get example sveltekit app working on spectrum.houseofmoran.io
-      - (x) example sveltekit app working locally
-      - (x) deployed on netlify
-      - (x) hosted under spectrum.houseofmoran.io
+    - (/) get example sveltekit app working on netlify
+      - (/) example sveltekit app working locally
+      - (/) deployed on netlify; https://deploy-preview-8--spectrum-green.netlify.app
     - (x) show map, initially focussed on edinburgh
     - (x) call `regions` endpoint whenever boundbox box changes
     - (x) maps returned geojson to regions displayed on the map, which is cleared whenever the bounding box changes
+    - (x) hosted under spectrum.houseofmoran.io
+      - (x) create domain name mapped to netlify
+      - (x) configure netlify
   - (x) build
     - (x) ingest openstreetmaps extract covering edinburgh
     - (x) find regions (incomplete, I think I don't know yet how to cover ways)
