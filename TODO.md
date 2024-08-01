@@ -35,9 +35,9 @@ flowchart TB
     endpoint2-..->flatgeobuf
 ```
 
-- (x) v0.1: show map bounding box as regions
+- (/) v0.1: show map bounding box as regions
 
-  - (x) webapp
+  - (/) webapp
 
     - (/) get example sveltekit app working on netlify
       - (/) example sveltekit app working locally
@@ -48,9 +48,9 @@ flowchart TB
       - (/) switch to centered on edinburgh
     - (/) call `regions` endpoint whenever bounding box changes
     - (/) maps returned geojson to regions displayed on the map, which is cleared whenever the bounding box changes
-    - (x) hosted under spectrum.houseofmoran.io
-      - (x) create domain name mapped to netlify
-      - (x) configure netlify
+    - (/) hosted under spectrum.houseofmoran.io
+      - (/) create domain name mapped to netlify
+      - (/) configure netlify
 
   - (/) service
     - (/) create basic axum webapp, running on fly.io, showing "hello world"
