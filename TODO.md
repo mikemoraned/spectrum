@@ -41,7 +41,8 @@ flowchart TB
       - (/) example sveltekit app working locally
       - (/) deployed on netlify; https://deploy-preview-8--spectrum-green.netlify.app
     - (x) show map, initially focussed on edinburgh
-      - (x) switch to default
+      - (/) switch to default setup for sveltekit
+      - (x) add basic mapbox setup
     - (x) call `regions` endpoint whenever boundbox box changes
     - (x) maps returned geojson to regions displayed on the map, which is cleared whenever the bounding box changes
     - (x) hosted under spectrum.houseofmoran.io
