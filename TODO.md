@@ -61,7 +61,7 @@ flowchart TB
   - (x) service
     - (x) create basic axum webapp, running on fly.io, showing "hello world"
       - (/) basic axum service running locally
-      - (x) create fly.io `spectrum-api` app
+      - (/) create fly.io `spectrum` app
       - (x) add tracing setup, sending traces to honeycomb
       - (x) ...
     - (x) `regions` endpoint that:
