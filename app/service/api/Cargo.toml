@@ -16,6 +16,10 @@ opentelemetry-semantic-conventions = { version = "0.14" }
 tracing-opentelemetry = "0.23"
 tracing = { workspace = true }
 
+geojson = { workspace = true }
+serde_json = { workspace = true }
+serde = { workspace = true }
+
 dotenvy = { workspace = true }
 axum = { workspace = true }
 tokio = { workspace = true }

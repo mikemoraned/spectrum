@@ -46,7 +46,7 @@ flowchart TB
       - (/) switch to default setup for sveltekit
       - (/) add basic mapbox setup
       - (/) switch to centered on edinburgh
-    - (x) call `regions` endpoint whenever boundbox box changes
+    - (x) call `regions` endpoint whenever bounding box changes
     - (x) maps returned geojson to regions displayed on the map, which is cleared whenever the bounding box changes
     - (x) hosted under spectrum.houseofmoran.io
       - (x) create domain name mapped to netlify

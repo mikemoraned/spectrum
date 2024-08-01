@@ -1,4 +1,7 @@
-use api::tracing::{init_opentelemetry_from_environment, init_safe_default_from_environment};
+use api::{
+    regions::regions,
+    tracing::{init_opentelemetry_from_environment, init_safe_default_from_environment},
+};
 use axum::{http::StatusCode, routing::get, Router};
 use clap::Parser;
 use tracing::info;
@@ -39,6 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
+        .route("/v1/regions", get(regions))
         .route("/health", get(health));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
