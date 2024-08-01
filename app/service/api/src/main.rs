@@ -2,8 +2,13 @@ use api::{
     regions::regions,
     tracing::{init_opentelemetry_from_environment, init_safe_default_from_environment},
 };
-use axum::{http::StatusCode, routing::get, Router};
+use axum::{
+    http::{Method, StatusCode},
+    routing::get,
+    Router,
+};
 use clap::Parser;
+use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
 
 #[derive(Parser, Debug)]
@@ -40,10 +45,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         init_safe_default_from_environment()?;
     }
 
+    let cors = CorsLayer::new()
+        .allow_methods([Method::GET])
+        // allow requests from any origin
+        .allow_origin(Any);
+
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .route("/v1/regions", get(regions))
-        .route("/health", get(health));
+        .route("/health", get(health))
+        .layer(cors);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
