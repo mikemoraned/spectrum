@@ -35,7 +35,7 @@ flowchart TB
     endpoint2-..->flatgeobuf
 ```
 
-- (x) v0.1: show regions
+- (x) v0.1: show map bounding box as regions
 
   - (x) webapp
 
@@ -47,26 +47,25 @@ flowchart TB
       - (/) add basic mapbox setup
       - (/) switch to centered on edinburgh
     - (/) call `regions` endpoint whenever bounding box changes
-    - (x) maps returned geojson to regions displayed on the map, which is cleared whenever the bounding box changes
+    - (/) maps returned geojson to regions displayed on the map, which is cleared whenever the bounding box changes
     - (x) hosted under spectrum.houseofmoran.io
       - (x) create domain name mapped to netlify
       - (x) configure netlify
 
-  - (x) build
-    - (x) ingest openstreetmaps extract covering edinburgh
-    - (x) find regions (incomplete, I think I don't know yet how to cover ways)
-    - (x) save as flatgeobuf
-  - (x) data
-    - (x) just check in flatgeobuf file directly
-  - (x) service
+  - (/) service
     - (/) create basic axum webapp, running on fly.io, showing "hello world"
       - (/) basic axum service running locally
       - (/) create fly.io `spectrum` app
       - (/) add tracing setup, sending traces to honeycomb
-    - (x) `regions` endpoint that:
-      - (x) takes a bounding box
-        - (/) tmp: returns the bounding box as a polygon
-      - (x) finds the shapes in the flatgeobuf that are in that bb
-      - (x) converts to geojson and returns it
+    - (/) `regions` endpoint that takes a bounding box and returns the bounding box as a polygon
 
+- (x) v0.2: show openstreetmap regions
+  - (x) build
+    - (x) ingest openstreetmaps extract covering edinburgh
+    - (x) find regions (incomplete, I think I don't know yet how to cover ways)
+    - (x) save as flatgeobuf
+  - (x) service
+    - (x) find all polygons that are in the flatgeobuf within the bounding box and convert to geojson
+  - (x) data
+    - (x) just check in flatgeobuf file directly
 - (x) ...
