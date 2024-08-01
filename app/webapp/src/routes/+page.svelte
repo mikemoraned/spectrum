@@ -6,6 +6,7 @@
 	import { onMount, onDestroy } from 'svelte';
 
 	import { PUBLIC_MAPBOX_TOKEN } from '$env/static/public';
+	import { PUBLIC_API_BASE_URL } from '$env/static/public';
 
 	let map;
 	let mapContainer;
@@ -23,7 +24,32 @@
 			style: `mapbox://styles/mapbox/outdoors-v11`,
 			...starting_position
 		});
+
+		map.on('moveend', updateOnViewChange);
+		updateOnViewChange();
 	});
+
+	async function fetchRegions(bounds) {
+		const sw = bounds.getSouthWest();
+		const ne = bounds.getNorthEast();
+		const q = `?sw_lat=${sw.lat}&sw_lon=${sw.lng}&ne_lat=${ne.lat}&ne_lon=${ne.lng}`;
+		const service_url = `${PUBLIC_API_BASE_URL}regions${q}`;
+		console.log('calling service ', service_url, ' ...');
+		const response = await fetch(service_url);
+		const geojson = response.json();
+		console.log('called service');
+		return geojson;
+	}
+
+	function updateOnViewChange() {
+		console.log('view changed');
+		const bounds = map.getBounds();
+		console.log('bounds, ', bounds);
+		console.log('triggering load of geojson');
+		fetchRegions(bounds).then((geojson) => {
+			console.log('geojson loaded');
+		});
+	}
 
 	onDestroy(() => {
 		if (map) {
