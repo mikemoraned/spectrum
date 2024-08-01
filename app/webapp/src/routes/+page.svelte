@@ -9,21 +9,19 @@
 
 	let map;
 	let mapContainer;
-	let lng, lat, zoom;
 
-	lng = -71.224518;
-	lat = 42.213995;
-	zoom = 9;
+	const edinburgh = [-3.188267, 55.953251];
+	const starting_position = {
+		center: edinburgh,
+		zoom: 12
+	};
 
 	onMount(() => {
-		const initialState = { lng: lng, lat: lat, zoom: zoom };
-
 		map = new Map({
 			container: mapContainer,
 			accessToken: PUBLIC_MAPBOX_TOKEN,
 			style: `mapbox://styles/mapbox/outdoors-v11`,
-			center: [initialState.lng, initialState.lat],
-			zoom: initialState.zoom
+			...starting_position
 		});
 	});
 
