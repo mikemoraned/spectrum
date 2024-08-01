@@ -35,13 +35,24 @@ flowchart TB
     endpoint2-..->flatgeobuf
 ```
 
-- (x) v0.1
+- (x) v0.1: show regions
   - (x) webapp
+    - (x) get example sveltekit app working on spectrum.houseofmoran.io
+      - (x) example sveltekit app working locally
+      - (x) deployed on netlify
+      - (x) hosted under spectrum.houseofmoran.io
     - (x) show map, initially focussed on edinburgh
-    - (x) call `routes` endpoint whenever boundbox box changes
-    - (x) maps returned geojson to a route displayed on the map, which is cleared whenever the bounding box changes
+    - (x) call `regions` endpoint whenever boundbox box changes
+    - (x) maps returned geojson to regions displayed on the map, which is cleared whenever the bounding box changes
+  - (x) build
+    - (x) ingest openstreetmaps extract covering edinburgh
+    - (x) find regions (incomplete, I think I don't know yet how to cover ways)
+    - (x) save as flatgeobuf
+  - (x) data
+    - (x) just check in flatgeobuf file directly
   - (x) service
-    - (x) `routes` endpoint that takes a bounding box and returns a random set of routes that overlap that bounding box, represented as geojson
-  - build: none
-  - data: none
+    - (x) `regions` endpoint that:
+      - takes a bounding box
+      - finds the shapes in the flatgeobuf that are in that bb
+      - converts to geojson and returns it
 - (x) ...
