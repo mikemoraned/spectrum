@@ -25,9 +25,31 @@
 			...starting_position
 		});
 
+		map.on('load', initialiseSource);
 		map.on('moveend', updateOnViewChange);
-		updateOnViewChange();
 	});
+
+	async function initialiseSource() {
+		const source = {
+			type: 'geojson',
+			data: null
+		};
+
+		map.addSource('regions', source);
+
+		map.addLayer({
+			id: 'regions',
+			type: 'fill',
+			source: 'regions',
+			layout: {},
+			paint: {
+				'fill-color': '#0080ff', // blue color fill
+				'fill-opacity': 0.5
+			}
+		});
+
+		updateOnViewChange();
+	}
 
 	async function fetchRegions(bounds) {
 		const sw = bounds.getSouthWest();
@@ -48,6 +70,9 @@
 		console.log('triggering load of geojson');
 		fetchRegions(bounds).then((geojson) => {
 			console.log('geojson loaded');
+			const source = map.getSource('regions');
+			source.setData(geojson);
+			console.log('source updated');
 		});
 	}
 

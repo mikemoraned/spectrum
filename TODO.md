@@ -46,7 +46,7 @@ flowchart TB
       - (/) switch to default setup for sveltekit
       - (/) add basic mapbox setup
       - (/) switch to centered on edinburgh
-    - (x) call `regions` endpoint whenever bounding box changes
+    - (/) call `regions` endpoint whenever bounding box changes
     - (x) maps returned geojson to regions displayed on the map, which is cleared whenever the bounding box changes
     - (x) hosted under spectrum.houseofmoran.io
       - (x) create domain name mapped to netlify
@@ -64,8 +64,9 @@ flowchart TB
       - (/) create fly.io `spectrum` app
       - (/) add tracing setup, sending traces to honeycomb
     - (x) `regions` endpoint that:
-      - takes a bounding box
-      - finds the shapes in the flatgeobuf that are in that bb
-      - converts to geojson and returns it
+      - (x) takes a bounding box
+        - (/) tmp: returns the bounding box as a polygon
+      - (x) finds the shapes in the flatgeobuf that are in that bb
+      - (x) converts to geojson and returns it
 
 - (x) ...
