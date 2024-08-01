@@ -9,4 +9,4 @@ FROM fedora:34 AS runner
 COPY --from=builder /prod/target/release/api /bin
 RUN ls -R .
 
-CMD ./bin/api
+CMD ./bin/api --opentelemetry
