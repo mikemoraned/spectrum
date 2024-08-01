@@ -59,11 +59,10 @@ flowchart TB
   - (x) data
     - (x) just check in flatgeobuf file directly
   - (x) service
-    - (x) create basic axum webapp, running on fly.io, showing "hello world"
+    - (/) create basic axum webapp, running on fly.io, showing "hello world"
       - (/) basic axum service running locally
       - (/) create fly.io `spectrum` app
-      - (x) add tracing setup, sending traces to honeycomb
-      - (x) ...
+      - (/) add tracing setup, sending traces to honeycomb
     - (x) `regions` endpoint that:
       - takes a bounding box
       - finds the shapes in the flatgeobuf that are in that bb
