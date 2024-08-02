@@ -19,7 +19,7 @@ pub fn init_opentelemetry_from_environment(
     let tracing_exporter_http_endpoint = load_public("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")?;
     debug!("using '{}' as endpoint", tracing_exporter_http_endpoint);
 
-    let headers = HashMap::from([("x-honeycomb-team".into(), honeycomb_api_key.into())]);
+    let headers = HashMap::from([("x-honeycomb-team".into(), honeycomb_api_key)]);
     let resource = Resource::new([KeyValue::new(
         semcov::resource::SERVICE_NAME,
         String::from(service_name),

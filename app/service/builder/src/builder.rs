@@ -22,8 +22,8 @@ pub fn extract_regions(osmpbf_path: &Path) -> Result<GeometryCollection<f64>, ()
 
     debug!("Finding pending ways");
     reader
-        .read_ways_and_deps(way_filter, |element| match element {
-            Element::Way(way) => {
+        .read_ways_and_deps(way_filter, |element| {
+            if let Element::Way(way) = element {
                 let way_id = WayId(way.id());
                 let mut pending_refs_for_way: Vec<RefId> = vec![];
                 way.refs().for_each(|r| {
@@ -34,7 +34,6 @@ pub fn extract_regions(osmpbf_path: &Path) -> Result<GeometryCollection<f64>, ()
                 });
                 pending_refs_for_ways.insert(way_id, pending_refs_for_way);
             }
-            _ => (),
         })
         .unwrap();
 
@@ -142,7 +141,7 @@ fn insert_coord_into_way(
         let coords = coords_for_way.get_mut(way_id).unwrap();
         for i in 0..pending_refs.len() {
             if pending_refs[i] == ref_id {
-                coords[i] = coord.clone();
+                coords[i] = *coord;
             }
         }
     }
