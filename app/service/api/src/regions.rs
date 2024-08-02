@@ -1,13 +1,17 @@
 use axum::extract::State;
 use axum::{extract::Query, Json};
+use flatgeobuf::FgbReader;
 use geo_types::polygon;
 use geo_types::Geometry;
 use geo_types::GeometryCollection;
-use geojson::FeatureCollection;
 use geojson::GeoJson;
+use geojson::{de, FeatureCollection};
 use serde::Deserialize;
+use std::fs::File;
+use std::io::BufReader;
 use std::iter::FromIterator;
-use tracing::instrument;
+use std::path::PathBuf;
+use tracing::{debug, instrument};
 
 use crate::state::AppState;
 
@@ -19,7 +23,18 @@ pub struct Bounds {
     ne_lon: f64,
 }
 
-pub struct Regions {}
+pub struct Regions {
+    reader: FgbReader<BufReader<File>>,
+}
+
+impl Regions {
+    pub fn from_flatgeobuf(fgb_path: &PathBuf) -> Result<Self, Box<dyn std::error::Error>> {
+        let filein = BufReader::new(File::open(fgb_path)?);
+        let reader = FgbReader::open(filein)?;
+        debug!("Opened FlatGeobuf file: {:?}", fgb_path);
+        Ok(Regions { reader })
+    }
+}
 
 impl Regions {
     #[instrument(skip(self))]

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 use api::{
     regions::{regions, Regions},
@@ -17,6 +17,10 @@ use tracing::info;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
+    /// path to FlatGeobuf file
+    #[arg(long, short)]
+    fgb: PathBuf,
+
     /// enable opentelemetry
     #[arg(long)]
     opentelemetry: bool,
@@ -59,7 +63,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/health", get(health))
         .layer(cors)
         .with_state(AppState {
-            regions: Arc::new(Regions {}),
+            regions: Arc::new(Regions::from_flatgeobuf(&args.fgb)?),
         });
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
