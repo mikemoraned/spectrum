@@ -6,3 +6,7 @@ edition = "2021"
 [dependencies]
 clap = { workspace = true }
 geo-types = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+geojson = { workspace = true }
+geozero = { workspace = true }
