@@ -71,4 +71,9 @@ flowchart TB
     - (/) find all polygons that are in the flatgeobuf within the bounding box and convert to geojson
       - (/) locally
       - (/) on fly.io
+- (x) v0.3: add basic search + cleanup pass
+  - (/) add mapbox location search
+  - (x) union regions
+  - (x) clippy hints
 - (x) ...
+- (x) support relations

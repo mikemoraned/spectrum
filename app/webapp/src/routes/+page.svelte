@@ -17,13 +17,19 @@
 		zoom: 12
 	};
 
-	onMount(() => {
+	onMount(async () => {
+		const { MapboxSearchBox } = await import('@mapbox/search-js-web');
+
 		map = new Map({
 			container: mapContainer,
 			accessToken: PUBLIC_MAPBOX_TOKEN,
 			style: `mapbox://styles/mapbox/outdoors-v11`,
 			...starting_position
 		});
+
+		const search = new MapboxSearchBox();
+		search.accessToken = PUBLIC_MAPBOX_TOKEN;
+		map.addControl(search);
 
 		map.on('load', initialiseSource);
 		map.on('moveend', updateOnViewChange);
@@ -82,6 +88,10 @@
 		}
 	});
 </script>
+
+<head>
+	<link href="https://api.tiles.mapbox.com/mapbox-gl-js/v3.5.2/mapbox-gl.css" rel="stylesheet" />
+</head>
 
 <div class="map-wrap">
 	<div class="map" bind:this={mapContainer} />
