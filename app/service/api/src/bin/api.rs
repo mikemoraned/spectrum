@@ -11,7 +11,10 @@ use axum::{
     Router,
 };
 use clap::Parser;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::{
+    compression::CompressionLayer,
+    cors::{Any, CorsLayer},
+};
 use tracing::info;
 
 #[derive(Parser, Debug)]
@@ -62,6 +65,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/v1/regions", get(regions))
         .route("/health", get(health))
         .layer(cors)
+        .layer(CompressionLayer::new())
         .with_state(AppState {
             regions: Arc::new(Regions::from_flatgeobuf(&args.fgb)?),
         });
