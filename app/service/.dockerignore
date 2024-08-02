@@ -3,3 +3,5 @@ fly*.toml
 target/*
 
 Dockerfile*
+
+builder/data
