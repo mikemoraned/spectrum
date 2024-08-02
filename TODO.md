@@ -65,10 +65,10 @@ flowchart TB
     - (/) find regions (incomplete, as I don't know yet how to handle relations)
     - (/) save as geojson and verify looks correct in geojson.io
     - (/) save as flatgeobuf
-  - (x) data
-    - (x) just check in flatgeobuf file directly
-  - (x) service
-    - (x) find all polygons that are in the flatgeobuf within the bounding box and convert to geojson
+  - (/) data
+    - (/) just check in flatgeobuf file directly
+  - (/) service
+    - (/) find all polygons that are in the flatgeobuf within the bounding box and convert to geojson
       - (/) locally
-      - (x) on fly.io
+      - (/) on fly.io
 - (x) ...
