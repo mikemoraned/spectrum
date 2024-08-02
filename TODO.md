@@ -69,4 +69,6 @@ flowchart TB
     - (x) just check in flatgeobuf file directly
   - (x) service
     - (x) find all polygons that are in the flatgeobuf within the bounding box and convert to geojson
+      - (/) locally
+      - (x) on fly.io
 - (x) ...
