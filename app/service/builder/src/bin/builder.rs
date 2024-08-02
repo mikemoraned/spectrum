@@ -2,8 +2,9 @@ use std::{fs::File, io::BufWriter, path::PathBuf};
 
 use builder::builder::extract_regions;
 use clap::Parser;
+use flatgeobuf::{FgbWriter, GeometryType};
 use geozero::{geojson::GeoJsonWriter, GeozeroGeometry};
-use tracing::{debug, info};
+use tracing::{debug, info, trace};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
 
 /// Extract features from Openstreetmap and convert into single output file
@@ -52,6 +53,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for geom in geoms.iter() {
             geom.process_geom(&mut gout)?;
         }
+    }
+
+    if let Some(s) = args.fgb {
+        info!("writing flatgeobuf to {:?}", s);
+        let mut fgb = FgbWriter::create("all", GeometryType::Polygon)?;
+        let mut geom_added_count = 0;
+        debug!("adding geoms");
+        for geom in geoms.iter() {
+            match geom {
+                geo_types::Geometry::GeometryCollection(c) => {
+                    for geom in c.into_iter() {
+                        trace!("adding geom, {:?}", geom);
+                        fgb.add_feature_geom(geom.clone(), |_| {})?;
+                        geom_added_count += 1;
+                    }
+                }
+                _ => {
+                    todo!("only handling GeometryCollection for now");
+                }
+            }
+        }
+        debug!("added {} geoms", geom_added_count);
+
+        let mut fout = BufWriter::new(File::create(s)?);
+        fgb.write(&mut fout)?;
     }
 
     Ok(())

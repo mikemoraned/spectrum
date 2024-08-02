@@ -60,11 +60,11 @@ flowchart TB
     - (/) `regions` endpoint that takes a bounding box and returns the bounding box as a polygon
 
 - (x) v0.2: show openstreetmap regions
-  - (x) build
+  - (/) build
     - (/) ingest openstreetmaps extract covering edinburgh
     - (/) find regions (incomplete, as I don't know yet how to handle relations)
     - (/) save as geojson and verify looks correct in geojson.io
-    - (x) save as flatgeobuf
+    - (/) save as flatgeobuf
   - (x) data
     - (x) just check in flatgeobuf file directly
   - (x) service
