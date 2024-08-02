@@ -1,5 +1,8 @@
+use std::sync::Arc;
+
 use api::{
-    regions::regions,
+    regions::{regions, Regions},
+    state::AppState,
     tracing::{init_opentelemetry_from_environment, init_safe_default_from_environment},
 };
 use axum::{
@@ -54,7 +57,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/", get(|| async { "Hello, World!" }))
         .route("/v1/regions", get(regions))
         .route("/health", get(health))
-        .layer(cors);
+        .layer(cors)
+        .with_state(AppState {
+            regions: Arc::new(Regions {}),
+        });
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
