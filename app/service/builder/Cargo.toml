@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+osmpbf = "0.3.4"
+
 clap = { workspace = true }
 geo-types = { workspace = true }
 tracing = { workspace = true }
