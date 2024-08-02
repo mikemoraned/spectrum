@@ -1,0 +1,15 @@
+[package]
+name = "builder"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+osmpbf = "0.3.4"
+
+clap = { workspace = true }
+geo-types = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+geojson = { workspace = true }
+geozero = { workspace = true }
+flatgeobuf = { workspace = true }

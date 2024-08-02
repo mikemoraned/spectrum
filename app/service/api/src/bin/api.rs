@@ -1,5 +1,8 @@
+use std::{path::PathBuf, sync::Arc};
+
 use api::{
-    regions::regions,
+    regions::{regions, Regions},
+    state::AppState,
     tracing::{init_opentelemetry_from_environment, init_safe_default_from_environment},
 };
 use axum::{
@@ -8,12 +11,19 @@ use axum::{
     Router,
 };
 use clap::Parser;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::{
+    compression::CompressionLayer,
+    cors::{Any, CorsLayer},
+};
 use tracing::info;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
+    /// path to FlatGeobuf file
+    #[arg(long, short)]
+    fgb: PathBuf,
+
     /// enable opentelemetry
     #[arg(long)]
     opentelemetry: bool,
@@ -54,7 +64,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/", get(|| async { "Hello, World!" }))
         .route("/v1/regions", get(regions))
         .route("/health", get(health))
-        .layer(cors);
+        .layer(cors)
+        .layer(CompressionLayer::new())
+        .with_state(AppState {
+            regions: Arc::new(Regions::from_flatgeobuf(&args.fgb)?),
+        });
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
     axum::serve(listener, app).await.unwrap();

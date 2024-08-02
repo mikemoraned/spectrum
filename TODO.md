@@ -35,9 +35,9 @@ flowchart TB
     endpoint2-..->flatgeobuf
 ```
 
-- (x) v0.1: show map bounding box as regions
+- (/) v0.1: show map bounding box as regions
 
-  - (x) webapp
+  - (/) webapp
 
     - (/) get example sveltekit app working on netlify
       - (/) example sveltekit app working locally
@@ -48,9 +48,9 @@ flowchart TB
       - (/) switch to centered on edinburgh
     - (/) call `regions` endpoint whenever bounding box changes
     - (/) maps returned geojson to regions displayed on the map, which is cleared whenever the bounding box changes
-    - (x) hosted under spectrum.houseofmoran.io
-      - (x) create domain name mapped to netlify
-      - (x) configure netlify
+    - (/) hosted under spectrum.houseofmoran.io
+      - (/) create domain name mapped to netlify
+      - (/) configure netlify
 
   - (/) service
     - (/) create basic axum webapp, running on fly.io, showing "hello world"
@@ -60,12 +60,15 @@ flowchart TB
     - (/) `regions` endpoint that takes a bounding box and returns the bounding box as a polygon
 
 - (x) v0.2: show openstreetmap regions
-  - (x) build
-    - (x) ingest openstreetmaps extract covering edinburgh
-    - (x) find regions (incomplete, I think I don't know yet how to cover ways)
-    - (x) save as flatgeobuf
-  - (x) service
-    - (x) find all polygons that are in the flatgeobuf within the bounding box and convert to geojson
-  - (x) data
-    - (x) just check in flatgeobuf file directly
+  - (/) build
+    - (/) ingest openstreetmaps extract covering edinburgh
+    - (/) find regions (incomplete, as I don't know yet how to handle relations)
+    - (/) save as geojson and verify looks correct in geojson.io
+    - (/) save as flatgeobuf
+  - (/) data
+    - (/) just check in flatgeobuf file directly
+  - (/) service
+    - (/) find all polygons that are in the flatgeobuf within the bounding box and convert to geojson
+      - (/) locally
+      - (/) on fly.io
 - (x) ...
