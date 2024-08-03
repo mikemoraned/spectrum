@@ -35,6 +35,8 @@ flowchart TB
     endpoint2-..->flatgeobuf
 ```
 
+# green.houseofmoran.io
+
 - [x] v0.1: show map bounding box as regions
 
   - [x] webapp
@@ -79,3 +81,27 @@ flowchart TB
   - [ ] create a few arbitrary fixed paths across regions and show intersections
 - [ ] ...
 - [ ] support relations
+
+ideas for generating greener routes:
+
+- dynamic perturbation:
+  - use a routing library to find walking/bicycle routes between two points and then:
+  - take the route, intersect with green areas, and then either:
+    - mark empty (no green) sections as blocked
+    - or, map green proportions to the cost of a section
+  - ask routing library for a better route based on above score
+  - iterate above, returning best found within x-millis
+- pre-generation + dynamic matching:
+  - take an area, subdivide, and find all walking/bicycle routes between centroids of areas
+  - score all routes by proportion of greenery
+  - dynamically:
+    - map from/to points to closest centroids
+    - lookup centroid1 to centroid2 route
+    - patch a route from->centroid1, centroid2->to, and assemble into a route as from->centroid1->centroid2->to
+- - green field (applies to all of above):
+  * build a heatmap for areas by:
+    - assigning a score to a block based on proportion of block which contains green (size of intersection)
+    - or, assigning a score by a flood-filling regions (treating green areas as a fluid which is allowed to expand)
+  * score route sections by overlap with field
+
+# spectrum.houseofmoran.io
