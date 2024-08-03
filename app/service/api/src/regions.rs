@@ -10,7 +10,7 @@ use serde::Deserialize;
 use std::fs::File;
 use std::io::BufReader;
 use std::iter::FromIterator;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tracing::{debug, instrument};
 
 use crate::state::AppState;
@@ -28,9 +28,9 @@ pub struct Regions {
 }
 
 impl Regions {
-    pub fn from_flatgeobuf(fgb_path: &PathBuf) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_flatgeobuf(fgb_path: &Path) -> Result<Self, Box<dyn std::error::Error>> {
         Ok(Regions {
-            fgb_path: fgb_path.clone(),
+            fgb_path: fgb_path.to_path_buf(),
         })
     }
 }
