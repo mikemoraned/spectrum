@@ -79,6 +79,10 @@ flowchart TB
 - [ ] v0.4: simple overlaps with fixed routes
   - [ ] union regions (some of the regions found overlap)
   - [ ] create a few arbitrary fixed paths across regions and show intersections
+- [ ] specialise to green.houseofmoran.io
+  - [ ] switch netlify to be able to deploy multiple front-ends (green.houseofmoran.io and spectrum.houseofmoran.io)
+  - [ ] switch fly.io to deploy to geo.houseofmoran.io
+  - [ ] move current api to be under geo.houseofmoran.io/green/v1
 - [ ] ...
 - [ ] support relations
 
