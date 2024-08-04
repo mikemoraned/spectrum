@@ -54,12 +54,22 @@
 		// 	}
 		// });
 		map.addLayer({
-			id: 'regions',
+			id: 'regions-borders',
 			type: 'line',
 			source: 'regions',
 			layout: {},
 			paint: {
 				'line-color': 'black'
+			}
+		});
+		map.addLayer({
+			id: 'regions',
+			type: 'fill',
+			source: 'regions',
+			layout: {},
+			paint: {
+				'fill-color': '#0080ff', // blue color fill
+				'fill-opacity': 0.01
 			}
 		});
 		map.addLayer({
@@ -82,7 +92,7 @@
 			map.setFilter('regions-highlighted', ['==', ['id'], feature.id]);
 		});
 
-		map.on('mouseleave', 'counties', () => {
+		map.on('mouseleave', 'regions', () => {
 			map.getCanvas().style.cursor = '';
 			map.setFilter('regions-highlighted', ['==', ['id'], null]);
 		});
