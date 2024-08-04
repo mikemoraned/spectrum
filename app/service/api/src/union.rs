@@ -124,6 +124,32 @@ mod tests {
         assert_equivalent_polygons(polygon(&actual[0]).unwrap(), polygon(&expected[0]).unwrap());
     }
 
+    #[test]
+    fn union_where_one_polygon_contains_multple_others() {
+        let p1 = Geometry::Polygon(Polygon::new(
+            vec![(1.0, 1.0), (2.0, 1.0), (2.0, 2.0), (1.0, 2.0), (1.0, 1.0)].into(),
+            vec![],
+        ));
+        let p2 = Geometry::Polygon(Polygon::new(
+            vec![(1.5, 1.5), (2.5, 1.5), (2.5, 2.5), (1.5, 2.5), (1.5, 1.5)].into(),
+            vec![],
+        ));
+        let outer = Geometry::Polygon(Polygon::new(
+            vec![(0.5, 0.5), (3.0, 0.5), (3.0, 3.0), (0.5, 3.0), (0.5, 0.5)].into(),
+            vec![],
+        ));
+        let actual = union(vec![outer.clone(), p1, p2]).unwrap();
+        let expected = vec![outer];
+        for a in &actual {
+            println!(
+                "{:?}",
+                pretty_print_edgeset(&as_edgeset(polygon(a).unwrap()))
+            );
+        }
+        assert_eq!(actual.len(), 1);
+        assert_equivalent_polygons(polygon(&actual[0]).unwrap(), polygon(&expected[0]).unwrap());
+    }
+
     fn assert_equivalent_polygons(actual: &Polygon<f64>, expected: &Polygon<f64>) {
         let actual_edges = pretty_print_edgeset(&as_edgeset(actual));
         let expected_edges = pretty_print_edgeset(&as_edgeset(expected));
@@ -195,7 +221,7 @@ mod tests {
     fn pretty_print_edgeset(edgeset: &Vec<Edge>) -> String {
         let edges: Vec<String> = edgeset
             .iter()
-            .map(|e| format!("{} -> {}", e.from, e.to))
+            .map(|e| format!("{}->{}", e.from, e.to))
             .collect();
         format!("[{}]", edges.join(","))
     }
