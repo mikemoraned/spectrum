@@ -33,6 +33,7 @@ pub fn union(
                         let group = vec![from_p, to_p];
                         groups.push(group);
                         group_indexes[from_p] = Some(group_index);
+                        group_indexes[to_p] = Some(group_index);
                     }
                 }
             }
@@ -40,8 +41,9 @@ pub fn union(
         println!("{}:", from_p);
         for (i, group_index) in group_indexes.iter().enumerate() {
             println!(
-                "{}: {:?}",
+                "{}: {:?}, {:?}",
                 i,
+                group_index,
                 (match group_index {
                     Some(g) => groups[*g]
                         .iter()
