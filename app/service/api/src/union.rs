@@ -17,7 +17,7 @@ pub fn union(
         return Err("No polygons found".into());
     };
 
-    let mut groups: Vec<Vec<usize>> = vec![];
+    let mut groups: Vec<HashSet<usize>> = vec![];
     let mut group_indexes: Vec<Option<usize>> = vec![];
     group_indexes.resize(polygons.len(), None);
 
@@ -27,10 +27,12 @@ pub fn union(
                 if polygons[from_p].intersects(&polygons[to_p]) {
                     if let Some(group_index) = group_indexes[from_p] {
                         let group = &mut groups[group_index];
-                        group.push(to_p);
+                        group.insert(to_p);
                     } else {
                         let group_index = groups.len();
-                        let group = vec![from_p, to_p];
+                        let mut group = HashSet::new();
+                        group.insert(from_p);
+                        group.insert(to_p);
                         groups.push(group);
                         group_indexes[from_p] = Some(group_index);
                         group_indexes[to_p] = Some(group_index);
@@ -38,21 +40,21 @@ pub fn union(
                 }
             }
         }
-        println!("{}:", from_p);
-        for (i, group_index) in group_indexes.iter().enumerate() {
-            println!(
-                "{}: {:?}, {:?}",
-                i,
-                group_index,
-                (match group_index {
-                    Some(g) => groups[*g]
-                        .iter()
-                        .map(|i| i.to_string())
-                        .collect::<Vec<String>>(),
-                    None => vec![],
-                })
-            );
-        }
+        // println!("{}:", from_p);
+        // for (i, group_index) in group_indexes.iter().enumerate() {
+        //     println!(
+        //         "{}: {:?}, {:?}",
+        //         i,
+        //         group_index,
+        //         (match group_index {
+        //             Some(g) => groups[*g]
+        //                 .iter()
+        //                 .map(|i| i.to_string())
+        //                 .collect::<Vec<String>>(),
+        //             None => vec![],
+        //         })
+        //     );
+        // }
     }
 
     debug!("Num groups needing unioned: {}", groups.len());
@@ -63,9 +65,9 @@ pub fn union(
     );
 
     let mut unioned_polygons: Vec<Polygon<f64>> = vec![];
-    println!("unioning {} groups", groups.len());
+    // println!("unioning {} groups", groups.len());
     for group in groups {
-        println!("unioning {} polygons:", group.len());
+        // println!("unioning {} polygons:", group.len());
         let multi: Vec<MultiPolygon> = group
             .into_iter()
             .map(|p| MultiPolygon::new(vec![polygons[p].clone()]))
@@ -78,7 +80,7 @@ pub fn union(
 
         unioned_polygons.append(unioned.into_iter().collect::<Vec<Polygon<f64>>>().as_mut());
     }
-    println!("unioned groups");
+    // println!("unioned groups");
 
     let unioned = unioned_polygons
         .into_iter()
