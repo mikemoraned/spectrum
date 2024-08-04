@@ -72,7 +72,10 @@ pub fn union(
 
 #[cfg(test)]
 mod tests {
-    use geo::{coord, Coord, LineString};
+    use pretty_assertions::assert_eq;
+    use std::{collections::HashSet, hash::Hash};
+
+    use geo::{Coord, LineString};
 
     use super::*;
 
@@ -104,7 +107,11 @@ mod tests {
         let actual = union(vec![p1, p2]).unwrap();
         let expected = vec![expected_p];
         assert_eq!(actual.len(), 1);
-        assert_equivalent_polygons(polygon(&actual[0]).unwrap(), polygon(&expected[0]).unwrap());
+        let actual_poly = polygon(&actual[0]).unwrap();
+        let expected_poly = polygon(&expected[0]).unwrap();
+        let actual_edges = pretty_print_edgeset(&as_edgeset(actual_poly));
+        let expected_edges = pretty_print_edgeset(&as_edgeset(expected_poly));
+        assert_eq!(actual_edges, expected_edges);
     }
 
     // #[test]
@@ -130,51 +137,66 @@ mod tests {
         }
     }
 
-    // compare the actual and expected polygons, allowing for the coordinates to be in the same order
-    // but starting at a different coord
-    fn assert_equivalent_polygons(actual: &Polygon<f64>, expected: &Polygon<f64>) {
-        let actual_coords: Vec<Coord> = actual.exterior().coords().map(|c| c.clone()).collect();
-        for rotation in 0..actual_coords.len() {
-            let mut rotated_coords: Vec<Coord> = actual_coords.clone();
-            rotated_coords.rotate_right(rotation);
-            let rotated_polygon = Polygon::new(LineString::from(rotated_coords.clone()), vec![]);
-            if &rotated_polygon == expected {
-                return;
-            }
-        }
-        assert!(
-            false,
-            "Polygons are not equivalent: actual: {:?}, expected: {:?}",
-            pretty_print_poly(&actual),
-            pretty_print_poly(&expected)
-        );
+    #[derive(Debug, PartialEq, Eq, Hash)]
+    struct Edge {
+        from: String,
+        to: String,
     }
 
-    fn pretty_print_poly(poly: &Polygon<f64>) -> String {
+    fn as_edgeset(poly: &Polygon<f64>) -> Vec<Edge> {
+        let mut edges: HashSet<Edge> = HashSet::new();
         let coords: Vec<String> = poly
             .exterior()
             .coords()
             .map(|c| format!("{:?}", c.x_y()))
             .collect();
-        format!("[{}]", coords.join(","))
+        for i in 0..coords.len() - 1 {
+            edges.insert(Edge {
+                from: coords[i].clone(),
+                to: coords[(i + 1) % coords.len()].clone(),
+            });
+        }
+        let mut sorted: Vec<Edge> = edges.into_iter().collect();
+        sorted.sort_by(|a, b| a.from.cmp(&b.from).then(a.to.cmp(&b.to)));
+        sorted
     }
 
-    fn pretty_print(geometry: &Vec<Geometry<f64>>) -> String {
-        fn poly(poly: &Polygon<f64>) -> String {
-            let coords: Vec<String> = poly
-                .exterior()
-                .coords()
-                .map(|c| format!("{:?}", c.x_y()))
-                .collect();
-            format!("[{}]", coords.join(","))
-        }
-        let polys: Vec<String> = geometry
+    #[test]
+    fn test_as_edgeset() {
+        let p = Polygon::new(
+            vec![(1.0, 1.0), (2.0, 1.0), (2.0, 2.0), (1.0, 2.0), (1.0, 1.0)].into(),
+            vec![],
+        );
+        let actual_edgeset = as_edgeset(&p);
+        let expected_edgeset = vec![
+            Edge {
+                from: "(1.0, 1.0)".to_string(),
+                to: "(2.0, 1.0)".to_string(),
+            },
+            Edge {
+                from: "(1.0, 2.0)".to_string(),
+                to: "(1.0, 1.0)".to_string(),
+            },
+            Edge {
+                from: "(2.0, 1.0)".to_string(),
+                to: "(2.0, 2.0)".to_string(),
+            },
+            Edge {
+                from: "(2.0, 2.0)".to_string(),
+                to: "(1.0, 2.0)".to_string(),
+            },
+        ];
+        assert_eq!(
+            pretty_print_edgeset(&actual_edgeset),
+            pretty_print_edgeset(&expected_edgeset)
+        );
+    }
+
+    fn pretty_print_edgeset(edgeset: &Vec<Edge>) -> String {
+        let edges: Vec<String> = edgeset
             .iter()
-            .flat_map(|g| match g {
-                Geometry::Polygon(p) => Some(poly(p)),
-                _ => None,
-            })
+            .map(|e| format!("{} -> {}", e.from, e.to))
             .collect();
-        polys.join(",")
+        format!("[{}]", edges.join(","))
     }
 }
