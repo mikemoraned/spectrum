@@ -75,8 +75,6 @@ mod tests {
     use pretty_assertions::assert_eq;
     use std::{collections::HashSet, hash::Hash};
 
-    use geo::{Coord, LineString};
-
     use super::*;
 
     #[test]
@@ -107,28 +105,30 @@ mod tests {
         let actual = union(vec![p1, p2]).unwrap();
         let expected = vec![expected_p];
         assert_eq!(actual.len(), 1);
-        let actual_poly = polygon(&actual[0]).unwrap();
-        let expected_poly = polygon(&expected[0]).unwrap();
-        let actual_edges = pretty_print_edgeset(&as_edgeset(actual_poly));
-        let expected_edges = pretty_print_edgeset(&as_edgeset(expected_poly));
-        assert_eq!(actual_edges, expected_edges);
+        assert_equivalent_polygons(polygon(&actual[0]).unwrap(), polygon(&expected[0]).unwrap());
     }
 
-    // #[test]
-    // fn _union_of_where_one_polygon_contains_the_other() {
-    //     let inner = Geometry::Polygon(Polygon::new(
-    //         vec![(1.0, 1.0), (1.0, 3.0), (3.0, 2.0), (3.0, 1.0), (1.0, 1.0)].into(),
-    //         vec![],
-    //     ));
-    //     let outer = Geometry::Polygon(Polygon::new(
-    //         vec![(0.0, 0.0), (0.0, 4.0), (4.0, 4.0), (4.0, 0.0), (0.0, 0.0)].into(),
-    //         vec![],
-    //     ));
-    //     let actual = union(vec![outer.clone(), inner]).unwrap();
-    //     let expected = vec![outer];
-    //     assert_eq!(actual.len(), 1);
-    //     assert_equivalent_polygons(polygon(&actual[0]).unwrap(), polygon(&expected[0]).unwrap());
-    // }
+    #[test]
+    fn union_where_one_polygon_contains_one_other() {
+        let p1 = Geometry::Polygon(Polygon::new(
+            vec![(1.0, 1.0), (2.0, 1.0), (2.0, 2.0), (1.0, 2.0), (1.0, 1.0)].into(),
+            vec![],
+        ));
+        let outer = Geometry::Polygon(Polygon::new(
+            vec![(0.5, 0.5), (3.0, 0.5), (3.0, 3.0), (0.5, 3.0), (0.5, 0.5)].into(),
+            vec![],
+        ));
+        let actual = union(vec![outer.clone(), p1]).unwrap();
+        let expected = vec![outer];
+        assert_eq!(actual.len(), 1);
+        assert_equivalent_polygons(polygon(&actual[0]).unwrap(), polygon(&expected[0]).unwrap());
+    }
+
+    fn assert_equivalent_polygons(actual: &Polygon<f64>, expected: &Polygon<f64>) {
+        let actual_edges = pretty_print_edgeset(&as_edgeset(actual));
+        let expected_edges = pretty_print_edgeset(&as_edgeset(expected));
+        assert_eq!(actual_edges, expected_edges);
+    }
 
     fn polygon(geometry: &Geometry<f64>) -> Option<&Polygon<f64>> {
         match geometry {
