@@ -3,6 +3,7 @@ use axum::{extract::Query, Json};
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
+use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
 use serde::Deserialize;
@@ -64,6 +65,9 @@ impl Regions {
 pub async fn regions(state: State<AppState>, Query(bounds): Query<Bounds>) -> Json<GeoJson> {
     let regions = state.regions.clone();
     let geometry_collection = regions.regions(bounds).await.unwrap();
-    let feature_collection = FeatureCollection::from(&geometry_collection);
+    let mut feature_collection = FeatureCollection::from(&geometry_collection);
+    for (id, feature) in feature_collection.features.iter_mut().enumerate() {
+        feature.id = Some(Id::Number(serde_json::Number::from(id)));
+    }
     Json(GeoJson::FeatureCollection(feature_collection))
 }
