@@ -3,7 +3,7 @@ use std::{
     path::Path,
 };
 
-use geo_types::{Coord, Geometry, GeometryCollection, LineString, Polygon};
+use geo::geometry::{Coord, Geometry, GeometryCollection, LineString, Polygon};
 use osmpbf::{Element, IndexedReader};
 use tracing::{debug, instrument};
 

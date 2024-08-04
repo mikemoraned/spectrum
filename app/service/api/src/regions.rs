@@ -2,8 +2,7 @@ use axum::extract::State;
 use axum::{extract::Query, Json};
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
-use geo_types::Geometry;
-use geo_types::GeometryCollection;
+use geo::geometry::{Geometry, GeometryCollection};
 use geojson::FeatureCollection;
 use geojson::GeoJson;
 use serde::Deserialize;
@@ -14,6 +13,7 @@ use std::path::{Path, PathBuf};
 use tracing::{debug, instrument};
 
 use crate::state::AppState;
+use crate::union::union;
 
 #[derive(Deserialize, Debug)]
 pub struct Bounds {
@@ -54,7 +54,9 @@ impl Regions {
             geoms.push(geom);
         }
 
-        Ok(GeometryCollection::from_iter(geoms))
+        let unioned: Vec<Geometry<f64>> = union(geoms)?;
+
+        Ok(GeometryCollection::from_iter(unioned))
     }
 }
 
