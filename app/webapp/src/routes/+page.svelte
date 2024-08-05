@@ -14,7 +14,8 @@
 	const edinburgh = [-3.188267, 55.953251];
 	const starting_position = {
 		center: edinburgh,
-		zoom: 12
+		// zoom: 12
+		zoom: 14
 	};
 
 	onMount(async () => {
@@ -43,16 +44,6 @@
 
 		map.addSource('regions', source);
 
-		// map.addLayer({
-		// 	id: 'regions',
-		// 	type: 'fill',
-		// 	source: 'regions',
-		// 	layout: {},
-		// 	paint: {
-		// 		'fill-color': '#0080ff', // blue color fill
-		// 		'fill-opacity': 0.1
-		// 	}
-		// });
 		map.addLayer({
 			id: 'regions-borders',
 			type: 'line',

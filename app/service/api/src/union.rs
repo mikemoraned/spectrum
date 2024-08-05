@@ -1,7 +1,24 @@
 use std::collections::HashSet;
 
-use geo::{BooleanOps, Geometry, Intersects, MultiPolygon, Polygon};
+use geo::{BooleanOps, Geometry, MultiPolygon, Polygon};
 use tracing::debug;
+
+#[derive(Eq, PartialEq, Hash)]
+struct PolygonId(usize);
+
+struct Partitioned {
+    // sets of polygons which do not overlap, where polygons are represented by their index
+    disjunctive_groups: Vec<HashSet<PolygonId>>,
+}
+
+fn partition(polygons: &Vec<Polygon>) -> Partitioned {
+    let mut disjunctive_groups: Vec<HashSet<PolygonId>> = vec![HashSet::new()];
+    for (i, _) in polygons.iter().enumerate() {
+        disjunctive_groups[0].insert(PolygonId(i));
+    }
+
+    Partitioned { disjunctive_groups }
+}
 
 pub fn union(
     geometry: Vec<Geometry<f64>>,
@@ -17,43 +34,43 @@ pub fn union(
         return Err("No polygons found".into());
     };
 
-    let mut groups: Vec<HashSet<usize>> = vec![];
-    let mut group_indexes: Vec<Option<usize>> = vec![];
-    group_indexes.resize(polygons.len(), None);
+    let partitioned = partition(&polygons);
 
-    for from_p in 0..polygons.len() {
-        for to_p in 0..polygons.len() {
-            if from_p < to_p {
-                if polygons[from_p].intersects(&polygons[to_p]) {
-                    if let Some(group_index) = group_indexes[from_p] {
-                        let group = &mut groups[group_index];
-                        group.insert(to_p);
-                    } else {
-                        let group_index = groups.len();
-                        let mut group = HashSet::new();
-                        group.insert(from_p);
-                        group.insert(to_p);
-                        groups.push(group);
-                        group_indexes[from_p] = Some(group_index);
-                        group_indexes[to_p] = Some(group_index);
-                    }
-                }
-            }
-        }
-    }
+    // let mut groups: Vec<HashSet<usize>> = vec![];
+    // let mut group_indexes: Vec<Option<usize>> = vec![];
+    // group_indexes.resize(polygons.len(), None);
 
-    debug!("Num groups needing unioned: {}", groups.len());
+    // for from_p in 0..polygons.len() {
+    //     for to_p in 0..polygons.len() {
+    //         if from_p < to_p {
+    //             if polygons[from_p].intersects(&polygons[to_p]) {
+    //                 if let Some(group_index) = group_indexes[from_p] {
+    //                     let group = &mut groups[group_index];
+    //                     group.insert(to_p);
+    //                 } else {
+    //                     let group_index = groups.len();
+    //                     let mut group = HashSet::new();
+    //                     group.insert(from_p);
+    //                     group.insert(to_p);
+    //                     groups.push(group);
+    //                     group_indexes[from_p] = Some(group_index);
+    //                     group_indexes[to_p] = Some(group_index);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
     debug!(
-        "Num Polygons which intersect something else: {}, total: {}",
-        group_indexes.iter().filter(|i| i.is_some()).count(),
-        polygons.len()
+        "Num groups needing unioned: {}",
+        partitioned.disjunctive_groups.len()
     );
 
     let mut unioned_polygons: Vec<Polygon<f64>> = vec![];
-    for group in groups {
+    for group in partitioned.disjunctive_groups {
         let multi: Vec<MultiPolygon> = group
             .into_iter()
-            .map(|p| MultiPolygon::new(vec![polygons[p].clone()]))
+            .map(|p| MultiPolygon::new(vec![polygons[p.0].clone()]))
             .collect();
 
         let unioned = multi
