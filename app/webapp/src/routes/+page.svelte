@@ -14,8 +14,7 @@
 	const edinburgh = [-3.188267, 55.953251];
 	const starting_position = {
 		center: edinburgh,
-		// zoom: 12
-		zoom: 14
+		zoom: 12
 	};
 
 	onMount(async () => {
