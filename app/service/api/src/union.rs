@@ -40,21 +40,6 @@ pub fn union(
                 }
             }
         }
-        // println!("{}:", from_p);
-        // for (i, group_index) in group_indexes.iter().enumerate() {
-        //     println!(
-        //         "{}: {:?}, {:?}",
-        //         i,
-        //         group_index,
-        //         (match group_index {
-        //             Some(g) => groups[*g]
-        //                 .iter()
-        //                 .map(|i| i.to_string())
-        //                 .collect::<Vec<String>>(),
-        //             None => vec![],
-        //         })
-        //     );
-        // }
     }
 
     debug!("Num groups needing unioned: {}", groups.len());
@@ -65,9 +50,7 @@ pub fn union(
     );
 
     let mut unioned_polygons: Vec<Polygon<f64>> = vec![];
-    // println!("unioning {} groups", groups.len());
     for group in groups {
-        // println!("unioning {} polygons:", group.len());
         let multi: Vec<MultiPolygon> = group
             .into_iter()
             .map(|p| MultiPolygon::new(vec![polygons[p].clone()]))
@@ -80,7 +63,6 @@ pub fn union(
 
         unioned_polygons.append(unioned.into_iter().collect::<Vec<Polygon<f64>>>().as_mut());
     }
-    // println!("unioned groups");
 
     let unioned = unioned_polygons
         .into_iter()
@@ -90,51 +72,51 @@ pub fn union(
     Ok(unioned)
 }
 
-fn polygon(geometry: &Geometry<f64>) -> Option<&Polygon<f64>> {
-    match geometry {
-        Geometry::Polygon(p) => Some(p),
-        _ => None,
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Hash)]
-struct Edge {
-    from: String,
-    to: String,
-}
-
-fn as_edgeset(poly: &Polygon<f64>) -> Vec<Edge> {
-    let mut edges: HashSet<Edge> = HashSet::new();
-    let coords: Vec<String> = poly
-        .exterior()
-        .coords()
-        .map(|c| format!("{:?}", c.x_y()))
-        .collect();
-    for i in 0..coords.len() - 1 {
-        edges.insert(Edge {
-            from: coords[i].clone(),
-            to: coords[(i + 1) % coords.len()].clone(),
-        });
-    }
-    let mut sorted: Vec<Edge> = edges.into_iter().collect();
-    sorted.sort_by(|a, b| a.from.cmp(&b.from).then(a.to.cmp(&b.to)));
-    sorted
-}
-
-fn pretty_print_edgeset(edgeset: &Vec<Edge>) -> String {
-    let edges: Vec<String> = edgeset
-        .iter()
-        .map(|e| format!("{}->{}", e.from, e.to))
-        .collect();
-    format!("[{}]", edges.join(","))
-}
-
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
     use std::{collections::HashSet, hash::Hash};
 
     use super::*;
+
+    fn polygon(geometry: &Geometry<f64>) -> Option<&Polygon<f64>> {
+        match geometry {
+            Geometry::Polygon(p) => Some(p),
+            _ => None,
+        }
+    }
+
+    #[derive(Debug, PartialEq, Eq, Hash)]
+    struct Edge {
+        from: String,
+        to: String,
+    }
+
+    fn as_edgeset(poly: &Polygon<f64>) -> Vec<Edge> {
+        let mut edges: HashSet<Edge> = HashSet::new();
+        let coords: Vec<String> = poly
+            .exterior()
+            .coords()
+            .map(|c| format!("{:?}", c.x_y()))
+            .collect();
+        for i in 0..coords.len() - 1 {
+            edges.insert(Edge {
+                from: coords[i].clone(),
+                to: coords[(i + 1) % coords.len()].clone(),
+            });
+        }
+        let mut sorted: Vec<Edge> = edges.into_iter().collect();
+        sorted.sort_by(|a, b| a.from.cmp(&b.from).then(a.to.cmp(&b.to)));
+        sorted
+    }
+
+    fn pretty_print_edgeset(edgeset: &Vec<Edge>) -> String {
+        let edges: Vec<String> = edgeset
+            .iter()
+            .map(|e| format!("{}->{}", e.from, e.to))
+            .collect();
+        format!("[{}]", edges.join(","))
+    }
 
     #[test]
     fn union_of_two_overlapping_polygons() {
