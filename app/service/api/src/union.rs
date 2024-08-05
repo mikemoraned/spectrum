@@ -11,11 +11,8 @@ struct Partitioned {
     disjunctive_groups: Vec<HashSet<PolygonId>>,
 }
 
-#[derive(Clone)]
-enum GroupId {
-    Some(usize),
-    None,
-}
+#[derive(Clone, Copy, PartialEq, Debug)]
+struct GroupId(usize);
 
 fn partition(polygons: &Vec<Polygon>) -> Partitioned {
     let polygon_ids = polygons
@@ -23,48 +20,55 @@ fn partition(polygons: &Vec<Polygon>) -> Partitioned {
         .enumerate()
         .map(|(i, _)| PolygonId(i))
         .collect::<Vec<_>>();
-    let mut disjunctive_groups: Vec<HashSet<PolygonId>> = vec![];
-    let mut group_ids: Vec<GroupId> = vec![];
-    group_ids.resize(polygon_ids.len(), GroupId::None);
+    let mut disjunctive_groups: Vec<HashSet<PolygonId>> = polygon_ids
+        .iter()
+        .map(|id| HashSet::from_iter(vec![*id]))
+        .collect();
+    let mut group_ids: Vec<GroupId> = polygon_ids
+        .iter()
+        .enumerate()
+        .map(|(i, _)| GroupId(i))
+        .collect::<Vec<_>>();
 
-    for from_id in polygon_ids.iter() {
-        for to_id in polygon_ids.iter() {
-            if from_id.0 < to_id.0 {
-                if polygons[from_id.0].intersects(&polygons[to_id.0]) {
-                    if let GroupId::Some(from_group_id) = group_ids[from_id.0] {
-                        if let GroupId::Some(to_group_id) = group_ids[to_id.0] {
-                            // both belong already to a group, so need to combine
-                            let to_group = disjunctive_groups[to_group_id].clone();
-                            disjunctive_groups[from_group_id].extend(&to_group);
-                            for id in to_group.iter() {
-                                group_ids[id.0] = GroupId::Some(from_group_id);
-                            }
-                            disjunctive_groups[to_group_id].clear();
-                        } else {
-                            // from_id belongs to a group, to_id does not, so add to from_id's group
-                            let group = &mut disjunctive_groups[from_group_id];
-                            group.insert(*to_id);
-                            group_ids[to_id.0] = GroupId::Some(from_group_id);
+    for p1_id in polygon_ids.iter() {
+        for p2_id in polygon_ids.iter() {
+            // don't check against yourself and also don't check the same pair twice
+            if p1_id.0 < p2_id.0 {
+                // don't bother checking for intersection if already in the same group
+                if group_ids[p1_id.0] != group_ids[p2_id.0] {
+                    if polygons[p1_id.0].intersects(&polygons[p2_id.0]) {
+                        debug!("move, {:?} <- {:?}", group_ids[p1_id.0], group_ids[p2_id.0]);
+                        debug!("A: disjunctive_groups: {:?}", disjunctive_groups);
+                        // they intersect, so merge the groups by moving
+                        // everything from p2_group into p1_group
+                        let p2_group = disjunctive_groups[group_ids[p2_id.0].0].clone();
+                        debug!(
+                            "{:?} + {:?}",
+                            disjunctive_groups[group_ids[p1_id.0].0], p2_group,
+                        );
+                        disjunctive_groups[group_ids[p1_id.0].0].extend(&p2_group);
+                        debug!("= {:?}", disjunctive_groups[group_ids[p1_id.0].0]);
+                        debug!("B: disjunctive_groups: {:?}", disjunctive_groups);
+                        disjunctive_groups[group_ids[p2_id.0].0].clear();
+                        for id in p2_group.iter() {
+                            group_ids[id.0] = group_ids[p1_id.0];
                         }
-                    } else {
-                        // neither belong to a group, so create a new group for them
-                        let group_id = disjunctive_groups.len();
-                        let mut group = HashSet::new();
-                        group.insert(*from_id);
-                        group.insert(*to_id);
-                        disjunctive_groups.push(group);
-                        group_ids[from_id.0] = GroupId::Some(group_id);
-                        group_ids[to_id.0] = GroupId::Some(group_id);
+                        debug!("C: disjunctive_groups: {:?}", disjunctive_groups);
                     }
+                } else {
+                    debug!(
+                        "already in same group, {:?}, {:?}",
+                        group_ids[p1_id.0], group_ids[p2_id.0]
+                    );
                 }
+            } else {
+                debug!("early skip, {}, {}", p1_id.0, p2_id.0);
             }
+            debug!("disjunctive_groups: {:?}", disjunctive_groups);
         }
     }
 
-    let disjunctive_groups = disjunctive_groups
-        .into_iter()
-        .filter(|g| !g.is_empty())
-        .collect();
+    debug!("disjunctive_groups: {:?}", disjunctive_groups);
 
     Partitioned { disjunctive_groups }
 }
@@ -92,18 +96,26 @@ pub fn union(
 
     let mut unioned_polygons: Vec<Polygon<f64>> = vec![];
     for group in partitioned.disjunctive_groups {
-        debug!("group: {:?}", group);
-        let multi: Vec<MultiPolygon> = group
-            .into_iter()
-            .map(|p| MultiPolygon::new(vec![polygons[p.0].clone()]))
-            .collect();
+        // debug!("group: {:?}", group);
+        if group.is_empty() {
+            continue;
+        }
+        if group.len() == 1 {
+            let id = group.iter().next().unwrap().0;
+            unioned_polygons.push(polygons[id].clone());
+        } else {
+            let multi: Vec<MultiPolygon> = group
+                .into_iter()
+                .map(|p| MultiPolygon::new(vec![polygons[p.0].clone()]))
+                .collect();
 
-        let unioned = multi
-            .iter()
-            .skip(1)
-            .fold(multi[0].clone(), |acc, p| acc.union(p));
+            let unioned = multi
+                .iter()
+                .skip(1)
+                .fold(multi[0].clone(), |acc, p| acc.union(p));
 
-        unioned_polygons.append(unioned.into_iter().collect::<Vec<Polygon<f64>>>().as_mut());
+            unioned_polygons.append(unioned.into_iter().collect::<Vec<Polygon<f64>>>().as_mut());
+        }
     }
 
     let unioned = unioned_polygons
@@ -160,7 +172,7 @@ mod tests {
         format!("[{}]", edges.join(","))
     }
 
-    #[test]
+    #[test_log::test]
     fn union_of_two_overlapping_polygons() {
         let p1 = Geometry::Polygon(Polygon::new(
             vec![(1.0, 1.0), (2.0, 1.0), (2.0, 2.0), (1.0, 2.0), (1.0, 1.0)].into(),
@@ -191,7 +203,7 @@ mod tests {
         assert_equivalent_polygons(polygon(&actual[0]).unwrap(), polygon(&expected[0]).unwrap());
     }
 
-    #[test]
+    #[test_log::test]
     fn union_where_one_polygon_contains_one_other() {
         let p1 = Geometry::Polygon(Polygon::new(
             vec![(1.0, 1.0), (2.0, 1.0), (2.0, 2.0), (1.0, 2.0), (1.0, 1.0)].into(),
