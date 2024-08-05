@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use geo::{BooleanOps, Geometry, Intersects, MultiPolygon, Polygon};
-use tracing::debug;
+use tracing::{debug, warn};
 
 #[derive(Eq, PartialEq, Hash, Copy, Clone, Debug)]
 struct PolygonId(usize);
@@ -112,7 +112,7 @@ pub fn union(
             let unioned = multi
                 .iter()
                 .skip(1)
-                .fold(multi[0].clone(), |acc, p| acc.union(p));
+                .fold(multi[0].clone(), |acc, p| panic_safe_union(acc, &p));
 
             unioned_polygons.append(unioned.into_iter().collect::<Vec<Polygon<f64>>>().as_mut());
         }
@@ -124,6 +124,20 @@ pub fn union(
         .collect();
 
     Ok(unioned)
+}
+
+fn panic_safe_union(lhs: MultiPolygon, rhs: &MultiPolygon) -> MultiPolygon {
+    use std::panic;
+
+    let result = panic::catch_unwind(|| lhs.union(rhs));
+
+    match result {
+        Ok(unioned) => unioned,
+        Err(_) => {
+            warn!("Panic detected in union, falling back to lhs of attempted union");
+            lhs
+        }
+    }
 }
 
 #[cfg(test)]
