@@ -14,6 +14,26 @@ struct Partitioned {
 #[derive(Clone, Copy, PartialEq, Debug)]
 struct GroupId(usize);
 
+fn intersection_candidates(polygons: &Vec<Polygon>) -> Vec<(PolygonId, PolygonId)> {
+    let polygon_ids = polygons
+        .iter()
+        .enumerate()
+        .map(|(i, _)| PolygonId(i))
+        .collect::<Vec<_>>();
+
+    let mut candidates: Vec<(PolygonId, PolygonId)> = vec![];
+    for p1_id in polygon_ids.iter() {
+        for p2_id in polygon_ids.iter() {
+            // don't check against yourself and also don't check the same pair twice
+            if p1_id.0 < p2_id.0 {
+                candidates.push((*p1_id, *p2_id));
+            }
+        }
+    }
+
+    candidates
+}
+
 fn partition(polygons: &Vec<Polygon>) -> Partitioned {
     let polygon_ids = polygons
         .iter()
@@ -30,41 +50,33 @@ fn partition(polygons: &Vec<Polygon>) -> Partitioned {
         .map(|(i, _)| GroupId(i))
         .collect::<Vec<_>>();
 
-    for p1_id in polygon_ids.iter() {
-        for p2_id in polygon_ids.iter() {
-            // don't check against yourself and also don't check the same pair twice
-            if p1_id.0 < p2_id.0 {
-                // don't bother checking for intersection if already in the same group
-                if group_ids[p1_id.0] != group_ids[p2_id.0] {
-                    if polygons[p1_id.0].intersects(&polygons[p2_id.0]) {
-                        debug!("move, {:?} <- {:?}", group_ids[p1_id.0], group_ids[p2_id.0]);
-                        debug!("A: disjunctive_groups: {:?}", disjunctive_groups);
-                        // they intersect, so merge the groups by moving
-                        // everything from p2_group into p1_group
-                        let p2_group = disjunctive_groups[group_ids[p2_id.0].0].clone();
-                        debug!(
-                            "{:?} + {:?}",
-                            disjunctive_groups[group_ids[p1_id.0].0], p2_group,
-                        );
-                        disjunctive_groups[group_ids[p1_id.0].0].extend(&p2_group);
-                        debug!("= {:?}", disjunctive_groups[group_ids[p1_id.0].0]);
-                        debug!("B: disjunctive_groups: {:?}", disjunctive_groups);
-                        disjunctive_groups[group_ids[p2_id.0].0].clear();
-                        for id in p2_group.iter() {
-                            group_ids[id.0] = group_ids[p1_id.0];
-                        }
-                        debug!("C: disjunctive_groups: {:?}", disjunctive_groups);
-                    }
-                } else {
-                    debug!(
-                        "already in same group, {:?}, {:?}",
-                        group_ids[p1_id.0], group_ids[p2_id.0]
-                    );
+    for (p1_id, p2_id) in intersection_candidates(polygons) {
+        // don't bother checking for intersection if already in the same group
+        if group_ids[p1_id.0] != group_ids[p2_id.0] {
+            if polygons[p1_id.0].intersects(&polygons[p2_id.0]) {
+                debug!("move, {:?} <- {:?}", group_ids[p1_id.0], group_ids[p2_id.0]);
+                debug!("A: disjunctive_groups: {:?}", disjunctive_groups);
+                // they intersect, so merge the groups by moving
+                // everything from p2_group into p1_group
+                let p2_group = disjunctive_groups[group_ids[p2_id.0].0].clone();
+                debug!(
+                    "{:?} + {:?}",
+                    disjunctive_groups[group_ids[p1_id.0].0], p2_group,
+                );
+                disjunctive_groups[group_ids[p1_id.0].0].extend(&p2_group);
+                debug!("= {:?}", disjunctive_groups[group_ids[p1_id.0].0]);
+                debug!("B: disjunctive_groups: {:?}", disjunctive_groups);
+                disjunctive_groups[group_ids[p2_id.0].0].clear();
+                for id in p2_group.iter() {
+                    group_ids[id.0] = group_ids[p1_id.0];
                 }
-            } else {
-                debug!("early skip, {}, {}", p1_id.0, p2_id.0);
+                debug!("C: disjunctive_groups: {:?}", disjunctive_groups);
             }
-            debug!("disjunctive_groups: {:?}", disjunctive_groups);
+        } else {
+            debug!(
+                "already in same group, {:?}, {:?}",
+                group_ids[p1_id.0], group_ids[p2_id.0]
+            );
         }
     }
 
