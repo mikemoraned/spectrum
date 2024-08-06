@@ -77,7 +77,7 @@ flowchart TB
   - [x] add mapbox location search
   - [x] apply clippy hints
 - [ ] v0.4: simple overlaps with fixed routes
-  - [ ] union regions (some of the regions found overlap)
+  - [x] union regions (some of the regions found overlap)
   - [ ] create a few arbitrary fixed paths across regions and show intersections
 - [ ] specialise to green.houseofmoran.io
   - [ ] switch netlify to be able to deploy multiple front-ends (green.houseofmoran.io and spectrum.houseofmoran.io)
