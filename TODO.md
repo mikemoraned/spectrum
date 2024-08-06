@@ -76,7 +76,7 @@ flowchart TB
 - [x] v0.3: add basic search + cleanup pass
   - [x] add mapbox location search
   - [x] apply clippy hints
-- [ ] v0.4: collapse overlapping regions
+- [x] v0.4: collapse overlapping regions
   - [x] union regions (some of the regions found overlap)
   - [x] cleanups/tidy-ups
 - [ ] v0.5: specialise to green.houseofmoran.io
