@@ -78,8 +78,7 @@ flowchart TB
   - [x] apply clippy hints
 - [ ] v0.4: collapse overlapping regions
   - [x] union regions (some of the regions found overlap)
-  - [ ] move union so that it happen at build time
-  - [ ] cleanups/tidy-ups
+  - [x] cleanups/tidy-ups
 - [ ] v0.5: specialise to green.houseofmoran.io
   - [ ] switch netlify to be able to deploy multiple front-ends (green.houseofmoran.io and spectrum.houseofmoran.io)
   - [ ] switch fly.io to deploy to geo.houseofmoran.io

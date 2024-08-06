@@ -3,7 +3,6 @@ use std::{
     path::Path,
 };
 
-use core_geo::union::union;
 use geo::geometry::{Coord, Geometry, GeometryCollection, LineString, Polygon};
 use osmpbf::{Element, IndexedReader};
 use tracing::{debug, instrument};
@@ -86,11 +85,7 @@ pub fn extract_regions(
     }
     debug!("Created {} polygons", geometry.len());
 
-    debug!("Unioning polygons");
-    let unioned: Vec<Geometry<f64>> = union(geometry)?;
-    debug!("Reduced to {} polygons", unioned.len());
-
-    Ok(GeometryCollection::from_iter(unioned))
+    Ok(GeometryCollection::from_iter(geometry))
 }
 
 fn way_filter(way: &osmpbf::Way<'_>) -> bool {
