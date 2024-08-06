@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use geo::{BooleanOps, Geometry, Intersects, MultiPolygon, Polygon};
+use rstar::{primitives::GeomWithData, RTree};
 use tracing::{debug, warn};
 
 #[derive(Eq, PartialEq, Hash, Copy, Clone, Debug)]
@@ -15,19 +16,18 @@ struct Partitioned {
 struct GroupId(usize);
 
 fn intersection_candidates(polygons: &Vec<Polygon>) -> Vec<(PolygonId, PolygonId)> {
-    let polygon_ids = polygons
+    let entries = polygons
         .iter()
         .enumerate()
-        .map(|(i, _)| PolygonId(i))
+        .map(|(i, polygon)| GeomWithData::new(polygon.clone(), PolygonId(i)))
         .collect::<Vec<_>>();
 
+    let rtree = RTree::bulk_load(entries);
+
     let mut candidates: Vec<(PolygonId, PolygonId)> = vec![];
-    for p1_id in polygon_ids.iter() {
-        for p2_id in polygon_ids.iter() {
-            // don't check against yourself and also don't check the same pair twice
-            if p1_id.0 < p2_id.0 {
-                candidates.push((*p1_id, *p2_id));
-            }
+    for (p1, p2) in rtree.intersection_candidates_with_other_tree(&rtree) {
+        if p1.data != p2.data {
+            candidates.push((p1.data, p2.data));
         }
     }
 
