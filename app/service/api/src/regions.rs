@@ -4,10 +4,11 @@ use core_geo::union::union;
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
-use geo::{coord, Rect};
+use geo::{coord, point, Rect};
 use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
+use rstar::{RTree, AABB};
 use serde::Deserialize;
 use std::fs::File;
 use std::io::BufReader;
@@ -54,22 +55,45 @@ impl Regions {
         &self,
         bounds: Bounds,
     ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
-        let mut geoms = self.load_area(&bounds).await?;
+        let geometry = self.load_area(&bounds).await?;
 
         let bounds_width = (bounds.ne_lon - bounds.sw_lon).abs();
         let bounds_height = (bounds.ne_lat - bounds.sw_lat).abs();
-        let route_rect = Rect::new(
-            coord! {
-            x: bounds.sw_lon + (bounds_width / 5.0),
-            y: bounds.ne_lat - (bounds_height / 2.0) + (0.02 * bounds_height / 2.0) },
-            coord! {
-            x: bounds.ne_lon - (bounds_width / 5.0),
-            y: bounds.sw_lat + (bounds_height / 2.0) - (0.02 * bounds_height / 2.0)},
-        );
+        let corner1 = coord! {
+        x: bounds.sw_lon + (bounds_width / 5.0),
+        y: bounds.ne_lat - (bounds_height / 2.0) + (0.02 * bounds_height / 2.0) };
+        let corner2 = coord! {
+        x: bounds.ne_lon - (bounds_width / 5.0),
+        y: bounds.sw_lat + (bounds_height / 2.0) - (0.02 * bounds_height / 2.0)};
+        let route_rect = Rect::new(corner1, corner2);
 
-        geoms.push(Geometry::Rect(route_rect));
+        let polygons = geometry
+            .iter()
+            .filter_map(|g| match g {
+                Geometry::Polygon(p) => Some(p.clone()),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
 
-        Ok(GeometryCollection::from_iter(geoms))
+        let rtree = RTree::bulk_load(polygons);
+        let point1 = point! {
+        x: bounds.sw_lon + (bounds_width / 5.0),
+        y: bounds.ne_lat - (bounds_height / 2.0) + (0.02 * bounds_height / 2.0) };
+        let pount2 = point! {
+        x: bounds.ne_lon - (bounds_width / 5.0),
+        y: bounds.sw_lat + (bounds_height / 2.0) - (0.02 * bounds_height / 2.0)};
+        let aabb = AABB::from_corners(point1, pount2);
+        let mut overlap_candidates = vec![];
+        for poly in rtree.locate_in_envelope(&aabb) {
+            overlap_candidates.push(Geometry::Polygon(poly.clone()))
+        }
+        let mut unioned = union(overlap_candidates)?;
+
+        let mut overlaps = vec![];
+        overlaps.push(Geometry::Rect(route_rect));
+        overlaps.append(&mut unioned);
+
+        Ok(GeometryCollection::from_iter(overlaps))
     }
 
     #[instrument(skip(self))]
