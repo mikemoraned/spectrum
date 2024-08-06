@@ -4,7 +4,7 @@ use core_geo::union::union;
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
-use geo::{coord, Line};
+use geo::{coord, Rect};
 use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
@@ -56,12 +56,18 @@ impl Regions {
     ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
         let mut geoms = self.load_area(&bounds).await?;
 
-        let route_line = Line::new(
-            coord! { x: bounds.sw_lon, y: bounds.ne_lat },
-            coord! { x: bounds.ne_lon, y: bounds.sw_lat },
+        let bounds_width = (bounds.ne_lon - bounds.sw_lon).abs();
+        let bounds_height = (bounds.ne_lat - bounds.sw_lat).abs();
+        let route_rect = Rect::new(
+            coord! {
+            x: bounds.sw_lon + (bounds_width / 5.0),
+            y: bounds.ne_lat - (bounds_height / 2.0) + (0.02 * bounds_height / 2.0) },
+            coord! {
+            x: bounds.ne_lon - (bounds_width / 5.0),
+            y: bounds.sw_lat + (bounds_height / 2.0) - (0.02 * bounds_height / 2.0)},
         );
 
-        geoms.push(Geometry::Line(route_line));
+        geoms.push(Geometry::Rect(route_rect));
 
         Ok(GeometryCollection::from_iter(geoms))
     }
