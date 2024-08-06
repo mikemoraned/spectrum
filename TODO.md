@@ -87,6 +87,13 @@ flowchart TB
     2. take polygon describing route and find intersection candidates using the rtree
     3. take only those candidates and union all them together
     4. intersect the route polygon with that unioned area
+- [ ] v0.6: add real routes
+
+  - [ ] select the center of the bb and a random position in the bb as beginning/end points
+  - [ ] pass those to a route finder service to get a route; assume tha returns a polygon
+  - [ ] buffer the polygon
+  - [ ] find intersections of that polygon
+
 - [ ] specialise to green.houseofmoran.io
   - [ ] switch netlify to be able to deploy multiple front-ends (green.houseofmoran.io and spectrum.houseofmoran.io)
   - [ ] switch fly.io to deploy to geo.houseofmoran.io
