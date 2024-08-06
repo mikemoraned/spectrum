@@ -1,5 +1,6 @@
 use axum::extract::State;
 use axum::{extract::Query, Json};
+use core_geo::union::union;
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
@@ -14,7 +15,6 @@ use std::path::{Path, PathBuf};
 use tracing::{debug, instrument};
 
 use crate::state::AppState;
-use crate::union::union;
 
 #[derive(Deserialize, Debug)]
 pub struct Bounds {
@@ -23,7 +23,6 @@ pub struct Bounds {
     ne_lat: f64,
     ne_lon: f64,
 }
-
 pub struct Regions {
     fgb_path: PathBuf,
 }
