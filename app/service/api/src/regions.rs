@@ -4,11 +4,11 @@ use core_geo::union::union;
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
-use geo::{coord, point, Rect};
+use geo::{coord, Rect};
 use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
-use rstar::{RTree, AABB};
+use rstar::RTree;
 use serde::Deserialize;
 use std::fs::File;
 use std::io::BufReader;
@@ -75,16 +75,10 @@ impl Regions {
             })
             .collect::<Vec<_>>();
 
-        let rtree = RTree::bulk_load(polygons);
-        let point1 = point! {
-        x: bounds.sw_lon + (bounds_width / 5.0),
-        y: bounds.ne_lat - (bounds_height / 2.0) + (0.02 * bounds_height / 2.0) };
-        let pount2 = point! {
-        x: bounds.ne_lon - (bounds_width / 5.0),
-        y: bounds.sw_lat + (bounds_height / 2.0) - (0.02 * bounds_height / 2.0)};
-        let aabb = AABB::from_corners(point1, pount2);
+        let route_rtree = RTree::bulk_load(vec![route_rect.to_polygon()]);
+        let region_rtree = RTree::bulk_load(polygons);
         let mut overlap_candidates = vec![];
-        for poly in rtree.locate_in_envelope(&aabb) {
+        for (poly, _) in region_rtree.intersection_candidates_with_other_tree(&route_rtree) {
             overlap_candidates.push(Geometry::Polygon(poly.clone()))
         }
         let mut unioned = union(overlap_candidates)?;
