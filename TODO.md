@@ -79,10 +79,10 @@ flowchart TB
 - [x] v0.4: collapse overlapping regions
   - [x] union regions (some of the regions found overlap)
   - [x] cleanups/tidy-ups
-- [ ] v0.5: path overlaps
+- [x] v0.5: path overlaps
   - [x] add /v1/overlaps endpoint and switch ui to use it; endpoint just works same way as regions
   - [x] simulate a route polygon with a rectangle
-  - [ ] follow this approach to find intersections and show them:
+  - [x] follow this approach to find intersections and show them:
     1. put all region polygons in an rtree
     2. take polygon describing route and find intersection candidates using the rtree
     3. take only those candidates and union all them together
