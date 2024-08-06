@@ -1,7 +1,10 @@
 use std::collections::HashSet;
 
 use geo::{BooleanOps, Geometry, Intersects, MultiPolygon, Polygon};
-use rstar::{primitives::GeomWithData, RTree};
+use rstar::{
+    primitives::{CachedEnvelope, GeomWithData},
+    RTree,
+};
 use tracing::{debug, warn};
 
 #[derive(Eq, PartialEq, Hash, Copy, Clone, Debug)]
@@ -19,7 +22,7 @@ fn intersection_candidates(polygons: &Vec<Polygon>) -> Vec<(PolygonId, PolygonId
     let entries = polygons
         .iter()
         .enumerate()
-        .map(|(i, polygon)| GeomWithData::new(polygon.clone(), PolygonId(i)))
+        .map(|(i, polygon)| CachedEnvelope::new(GeomWithData::new(polygon.clone(), PolygonId(i))))
         .collect::<Vec<_>>();
 
     let rtree = RTree::bulk_load(entries);
