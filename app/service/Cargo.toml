@@ -1,5 +1,5 @@
 [workspace]
-members = ["api", "builder"]
+members = ["api", "builder", "core_geo"]
 resolver = "2"
 
 [workspace.dependencies]
