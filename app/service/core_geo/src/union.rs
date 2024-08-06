@@ -5,7 +5,7 @@ use rstar::{
     primitives::{CachedEnvelope, GeomWithData},
     RTree,
 };
-use tracing::{debug, warn};
+use tracing::{debug, trace, warn};
 
 #[derive(Eq, PartialEq, Hash, Copy, Clone, Debug)]
 struct PolygonId(usize);
@@ -18,26 +18,30 @@ struct Partitioned {
 #[derive(Clone, Copy, PartialEq, Debug)]
 struct GroupId(usize);
 
-fn intersection_candidates(polygons: &Vec<Polygon>) -> Vec<(PolygonId, PolygonId)> {
+fn intersection_candidates(polygons: &[Polygon]) -> Vec<(PolygonId, PolygonId)> {
     let entries = polygons
         .iter()
         .enumerate()
         .map(|(i, polygon)| CachedEnvelope::new(GeomWithData::new(polygon.clone(), PolygonId(i))))
         .collect::<Vec<_>>();
 
+    debug!("Building RTree");
     let rtree = RTree::bulk_load(entries);
+    debug!("RTree built");
 
+    debug!("Finding intersection candidates");
     let mut candidates: Vec<(PolygonId, PolygonId)> = vec![];
     for (p1, p2) in rtree.intersection_candidates_with_other_tree(&rtree) {
         if p1.data != p2.data {
             candidates.push((p1.data, p2.data));
         }
     }
+    debug!("Found {} candidates", candidates.len());
 
     candidates
 }
 
-fn partition(polygons: &Vec<Polygon>) -> Partitioned {
+fn partition(polygons: &[Polygon]) -> Partitioned {
     let polygon_ids = polygons
         .iter()
         .enumerate()
@@ -53,37 +57,43 @@ fn partition(polygons: &Vec<Polygon>) -> Partitioned {
         .map(|(i, _)| GroupId(i))
         .collect::<Vec<_>>();
 
-    for (p1_id, p2_id) in intersection_candidates(polygons) {
+    let candidates = intersection_candidates(polygons);
+
+    debug!("Finding disjunctive groups");
+    for (p1_id, p2_id) in candidates {
         // don't bother checking for intersection if already in the same group
         if group_ids[p1_id.0] != group_ids[p2_id.0] {
             if polygons[p1_id.0].intersects(&polygons[p2_id.0]) {
-                debug!("move, {:?} <- {:?}", group_ids[p1_id.0], group_ids[p2_id.0]);
-                debug!("A: disjunctive_groups: {:?}", disjunctive_groups);
+                trace!("move, {:?} <- {:?}", group_ids[p1_id.0], group_ids[p2_id.0]);
+                trace!("A: disjunctive_groups: {:?}", disjunctive_groups);
                 // they intersect, so merge the groups by moving
                 // everything from p2_group into p1_group
                 let p2_group = disjunctive_groups[group_ids[p2_id.0].0].clone();
-                debug!(
+                trace!(
                     "{:?} + {:?}",
-                    disjunctive_groups[group_ids[p1_id.0].0], p2_group,
+                    disjunctive_groups[group_ids[p1_id.0].0],
+                    p2_group,
                 );
                 disjunctive_groups[group_ids[p1_id.0].0].extend(&p2_group);
-                debug!("= {:?}", disjunctive_groups[group_ids[p1_id.0].0]);
-                debug!("B: disjunctive_groups: {:?}", disjunctive_groups);
+                trace!("= {:?}", disjunctive_groups[group_ids[p1_id.0].0]);
+                trace!("B: disjunctive_groups: {:?}", disjunctive_groups);
                 disjunctive_groups[group_ids[p2_id.0].0].clear();
                 for id in p2_group.iter() {
                     group_ids[id.0] = group_ids[p1_id.0];
                 }
-                debug!("C: disjunctive_groups: {:?}", disjunctive_groups);
+                trace!("C: disjunctive_groups: {:?}", disjunctive_groups);
             }
         } else {
-            debug!(
+            trace!(
                 "already in same group, {:?}, {:?}",
-                group_ids[p1_id.0], group_ids[p2_id.0]
+                group_ids[p1_id.0],
+                group_ids[p2_id.0]
             );
         }
     }
+    debug!("Found {} disjunctive groups", disjunctive_groups.len());
 
-    debug!("disjunctive_groups: {:?}", disjunctive_groups);
+    trace!("disjunctive_groups: {:?}", disjunctive_groups);
 
     Partitioned { disjunctive_groups }
 }
@@ -104,14 +114,14 @@ pub fn union(
 
     let partitioned = partition(&polygons);
 
-    debug!(
+    trace!(
         "Num groups needing unioned: {}",
         partitioned.disjunctive_groups.len()
     );
 
+    debug!("Unioning polygons");
     let mut unioned_polygons: Vec<Polygon<f64>> = vec![];
     for group in partitioned.disjunctive_groups {
-        // debug!("group: {:?}", group);
         if group.is_empty() {
             continue;
         }
@@ -127,16 +137,19 @@ pub fn union(
             let unioned = multi
                 .iter()
                 .skip(1)
-                .fold(multi[0].clone(), |acc, p| panic_safe_union(acc, &p));
+                .fold(multi[0].clone(), panic_safe_union);
 
             unioned_polygons.append(unioned.into_iter().collect::<Vec<Polygon<f64>>>().as_mut());
         }
     }
+    debug!("Unioned {} polygons", unioned_polygons.len());
 
+    debug!("converting to Geometry");
     let unioned = unioned_polygons
         .into_iter()
-        .map(|p| Geometry::Polygon(p))
+        .map(Geometry::Polygon)
         .collect();
+    debug!("converted to Geometry");
 
     Ok(unioned)
 }

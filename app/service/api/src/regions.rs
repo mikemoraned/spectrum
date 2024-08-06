@@ -1,6 +1,5 @@
 use axum::extract::State;
 use axum::{extract::Query, Json};
-use core_geo::union::union;
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
@@ -54,9 +53,7 @@ impl Regions {
             geoms.push(geom);
         }
 
-        let unioned: Vec<Geometry<f64>> = union(geoms)?;
-
-        Ok(GeometryCollection::from_iter(unioned))
+        Ok(GeometryCollection::from_iter(geoms))
     }
 }
 

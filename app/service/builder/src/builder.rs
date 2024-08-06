@@ -3,6 +3,7 @@ use std::{
     path::Path,
 };
 
+use core_geo::union::union;
 use geo::geometry::{Coord, Geometry, GeometryCollection, LineString, Polygon};
 use osmpbf::{Element, IndexedReader};
 use tracing::{debug, instrument};
@@ -14,7 +15,9 @@ struct WayId(i64);
 struct RefId(i64);
 
 #[instrument]
-pub fn extract_regions(osmpbf_path: &Path) -> Result<GeometryCollection<f64>, ()> {
+pub fn extract_regions(
+    osmpbf_path: &Path,
+) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
     let mut reader = IndexedReader::from_path(osmpbf_path).expect("Failed to open file");
 
     let mut pending_refs_for_ways: HashMap<WayId, Vec<RefId>> = HashMap::new();
@@ -83,7 +86,11 @@ pub fn extract_regions(osmpbf_path: &Path) -> Result<GeometryCollection<f64>, ()
     }
     debug!("Created {} polygons", geometry.len());
 
-    Ok(GeometryCollection::from_iter(geometry))
+    debug!("Unioning polygons");
+    let unioned: Vec<Geometry<f64>> = union(geometry)?;
+    debug!("Reduced to {} polygons", unioned.len());
+
+    Ok(GeometryCollection::from_iter(unioned))
 }
 
 fn way_filter(way: &osmpbf::Way<'_>) -> bool {

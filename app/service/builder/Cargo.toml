@@ -13,3 +13,5 @@ tracing-subscriber = { workspace = true }
 geojson = { workspace = true }
 geozero = { workspace = true }
 flatgeobuf = { workspace = true }
+
+core_geo = { path = "../core_geo" }
