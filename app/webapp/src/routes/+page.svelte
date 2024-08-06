@@ -94,7 +94,7 @@
 		const sw = bounds.getSouthWest();
 		const ne = bounds.getNorthEast();
 		const q = `?sw_lat=${sw.lat}&sw_lon=${sw.lng}&ne_lat=${ne.lat}&ne_lon=${ne.lng}`;
-		const service_url = `${PUBLIC_API_BASE_URL}regions${q}`;
+		const service_url = `${PUBLIC_API_BASE_URL}overlaps${q}`;
 		console.log('calling service ', service_url, ' ...');
 		const response = await fetch(service_url);
 		const geojson = response.json();

@@ -41,6 +41,30 @@ impl Regions {
         &self,
         bounds: Bounds,
     ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
+        let geoms = self.load_area(bounds).await?;
+
+        let unioned: Vec<Geometry<f64>> = union(geoms)?;
+
+        Ok(GeometryCollection::from_iter(unioned))
+    }
+
+    #[instrument(skip(self))]
+    pub async fn overlaps(
+        &self,
+        bounds: Bounds,
+    ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
+        let geoms = self.load_area(bounds).await?;
+
+        let unioned: Vec<Geometry<f64>> = union(geoms)?;
+
+        Ok(GeometryCollection::from_iter(unioned))
+    }
+
+    #[instrument(skip(self))]
+    pub async fn load_area(
+        &self,
+        bounds: Bounds,
+    ) -> Result<Vec<Geometry<f64>>, Box<dyn std::error::Error>> {
         let filein = BufReader::new(File::open(self.fgb_path.clone())?);
         let reader = FgbReader::open(filein)?;
         debug!("Opened FlatGeobuf file: {:?}", self.fgb_path);
@@ -54,9 +78,7 @@ impl Regions {
             geoms.push(geom);
         }
 
-        let unioned: Vec<Geometry<f64>> = union(geoms)?;
-
-        Ok(GeometryCollection::from_iter(unioned))
+        Ok(geoms)
     }
 }
 
@@ -64,9 +86,20 @@ impl Regions {
 pub async fn regions(state: State<AppState>, Query(bounds): Query<Bounds>) -> Json<GeoJson> {
     let regions = state.regions.clone();
     let geometry_collection = regions.regions(bounds).await.unwrap();
-    let mut feature_collection = FeatureCollection::from(&geometry_collection);
+    Json(as_geojson(&geometry_collection))
+}
+
+#[instrument(skip(state))]
+pub async fn overlaps(state: State<AppState>, Query(bounds): Query<Bounds>) -> Json<GeoJson> {
+    let regions = state.regions.clone();
+    let geometry_collection = regions.overlaps(bounds).await.unwrap();
+    Json(as_geojson(&geometry_collection))
+}
+
+fn as_geojson(geometry_collection: &GeometryCollection<f64>) -> GeoJson {
+    let mut feature_collection = FeatureCollection::from(geometry_collection);
     for (id, feature) in feature_collection.features.iter_mut().enumerate() {
         feature.id = Some(Id::Number(serde_json::Number::from(id)));
     }
-    Json(GeoJson::FeatureCollection(feature_collection))
+    GeoJson::FeatureCollection(feature_collection)
 }

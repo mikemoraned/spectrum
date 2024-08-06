@@ -80,7 +80,7 @@ flowchart TB
   - [x] union regions (some of the regions found overlap)
   - [x] cleanups/tidy-ups
 - [ ] v0.5: path overlaps
-  - [ ] add /v1/overlaps endpoint and switch ui to use it; endpoint just works same way as regions
+  - [x] add /v1/overlaps endpoint and switch ui to use it; endpoint just works same way as regions
   - [ ] add line which goes across from top left to bottom right, across area
   - [ ] buffer the line to make it have some width, turning it into a route polygon
   - [ ] follow this approach to find intersections and show them:
