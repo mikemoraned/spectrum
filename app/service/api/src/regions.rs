@@ -4,7 +4,7 @@ use core_geo::union::union;
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
-use geo::{coord, Rect};
+use geo::{coord, BooleanOps, MultiPolygon, Rect};
 use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
@@ -83,9 +83,20 @@ impl Regions {
         }
         let mut unioned = union(overlap_candidates)?;
 
+        let union_polygons = unioned
+            .iter()
+            .filter_map(|g| match g {
+                Geometry::Polygon(p) => Some(p.clone()),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        let intersection = MultiPolygon::new(vec![route_rect.to_polygon()])
+            .intersection(&MultiPolygon::new(union_polygons));
+
         let mut overlaps = vec![];
         overlaps.push(Geometry::Rect(route_rect));
-        overlaps.append(&mut unioned);
+        overlaps.push(Geometry::MultiPolygon(intersection));
+        // overlaps.append(&mut unioned);
 
         Ok(GeometryCollection::from_iter(overlaps))
     }
