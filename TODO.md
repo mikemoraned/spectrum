@@ -79,21 +79,23 @@ flowchart TB
 - [x] v0.4: collapse overlapping regions
   - [x] union regions (some of the regions found overlap)
   - [x] cleanups/tidy-ups
-- [ ] v0.5: specialise to green.houseofmoran.io
+- [ ] v0.5: path overlaps
+  - [ ] add /v1/overlaps endpoint and switch ui to use it; endpoint just works same way as regions
+  - [ ] add line which goes across from top left to bottom right, across area
+  - [ ] buffer the line to make it have some width, turning it into a route polygon
+  - [ ] follow this approach to find intersections and show them:
+    1. put all region polygons in an rtree
+    2. take polygon describing route and find intersection candidates using the rtree
+    3. take only those candidates and union all them together
+    4. intersect the route polygon with that unioned area
+- [ ] specialise to green.houseofmoran.io
   - [ ] switch netlify to be able to deploy multiple front-ends (green.houseofmoran.io and spectrum.houseofmoran.io)
   - [ ] switch fly.io to deploy to geo.houseofmoran.io
   - [ ] move current api to be under geo.houseofmoran.io/green/v1
-- [ ] v0.6: path overlaps
-  - [ ] create a few arbitrary fixed paths across regions and show intersections
-  - [ ] ...
-- [ ] ...
 - [ ] support relations
+- [ ] ...
 
 alternative idea for avoiding having to pre-union everything:
-
-1. put all poloygons in an rtree
-2. take polygon describing route and finding intersection candidates in the rtree
-3. take only those candidates and union all them together
 
 - this should be way less than all possible
 
