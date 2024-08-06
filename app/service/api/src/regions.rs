@@ -4,6 +4,7 @@ use core_geo::union::union;
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
+use geo::{coord, Line};
 use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
@@ -41,7 +42,7 @@ impl Regions {
         &self,
         bounds: Bounds,
     ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
-        let geoms = self.load_area(bounds).await?;
+        let geoms = self.load_area(&bounds).await?;
 
         let unioned: Vec<Geometry<f64>> = union(geoms)?;
 
@@ -53,17 +54,22 @@ impl Regions {
         &self,
         bounds: Bounds,
     ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
-        let geoms = self.load_area(bounds).await?;
+        let mut geoms = self.load_area(&bounds).await?;
 
-        let unioned: Vec<Geometry<f64>> = union(geoms)?;
+        let route_line = Line::new(
+            coord! { x: bounds.sw_lon, y: bounds.ne_lat },
+            coord! { x: bounds.ne_lon, y: bounds.sw_lat },
+        );
 
-        Ok(GeometryCollection::from_iter(unioned))
+        geoms.push(Geometry::Line(route_line));
+
+        Ok(GeometryCollection::from_iter(geoms))
     }
 
     #[instrument(skip(self))]
     pub async fn load_area(
         &self,
-        bounds: Bounds,
+        bounds: &Bounds,
     ) -> Result<Vec<Geometry<f64>>, Box<dyn std::error::Error>> {
         let filein = BufReader::new(File::open(self.fgb_path.clone())?);
         let reader = FgbReader::open(filein)?;
