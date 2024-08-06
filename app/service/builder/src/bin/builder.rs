@@ -43,7 +43,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("processing input files: {:?}", args.pbf);
     for input in args.pbf {
         let collection = extract_regions(&input).expect("failed when extracting regions");
-        geoms.push(geo_types::Geometry::GeometryCollection(collection));
+        geoms.push(geo::geometry::Geometry::GeometryCollection(collection));
     }
 
     if let Some(s) = args.geojson {
@@ -62,7 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         debug!("adding geoms");
         for geom in geoms.iter() {
             match geom {
-                geo_types::Geometry::GeometryCollection(c) => {
+                geo::geometry::Geometry::GeometryCollection(c) => {
                     for geom in c.into_iter() {
                         trace!("adding geom, {:?}", geom);
                         fgb.add_feature_geom(geom.clone(), |_| {})?;

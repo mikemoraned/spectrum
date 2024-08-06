@@ -1,9 +1,10 @@
 use axum::extract::State;
 use axum::{extract::Query, Json};
+use core_geo::union::union;
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
-use geo_types::Geometry;
-use geo_types::GeometryCollection;
+use geo::geometry::{Geometry, GeometryCollection};
+use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
 use serde::Deserialize;
@@ -22,7 +23,6 @@ pub struct Bounds {
     ne_lat: f64,
     ne_lon: f64,
 }
-
 pub struct Regions {
     fgb_path: PathBuf,
 }
@@ -54,7 +54,9 @@ impl Regions {
             geoms.push(geom);
         }
 
-        Ok(GeometryCollection::from_iter(geoms))
+        let unioned: Vec<Geometry<f64>> = union(geoms)?;
+
+        Ok(GeometryCollection::from_iter(unioned))
     }
 }
 
@@ -62,6 +64,9 @@ impl Regions {
 pub async fn regions(state: State<AppState>, Query(bounds): Query<Bounds>) -> Json<GeoJson> {
     let regions = state.regions.clone();
     let geometry_collection = regions.regions(bounds).await.unwrap();
-    let feature_collection = FeatureCollection::from(&geometry_collection);
+    let mut feature_collection = FeatureCollection::from(&geometry_collection);
+    for (id, feature) in feature_collection.features.iter_mut().enumerate() {
+        feature.id = Some(Id::Number(serde_json::Number::from(id)));
+    }
     Json(GeoJson::FeatureCollection(feature_collection))
 }

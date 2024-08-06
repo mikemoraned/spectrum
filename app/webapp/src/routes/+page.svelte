@@ -44,14 +44,47 @@
 		map.addSource('regions', source);
 
 		map.addLayer({
+			id: 'regions-borders',
+			type: 'line',
+			source: 'regions',
+			layout: {},
+			paint: {
+				'line-color': 'black'
+			}
+		});
+		map.addLayer({
 			id: 'regions',
 			type: 'fill',
 			source: 'regions',
 			layout: {},
 			paint: {
 				'fill-color': '#0080ff', // blue color fill
-				'fill-opacity': 0.5
+				'fill-opacity': 0.01
 			}
+		});
+		map.addLayer({
+			id: 'regions-highlighted',
+			type: 'fill',
+			source: 'regions',
+			layout: {},
+			paint: {
+				'fill-color': '#0080ff', // blue color fill
+				'fill-opacity': 0.5
+			},
+			filter: ['==', ['id'], null]
+		});
+
+		map.on('mousemove', 'regions', (e) => {
+			map.getCanvas().style.cursor = 'pointer';
+
+			const feature = e.features[0];
+			console.dir(feature);
+			map.setFilter('regions-highlighted', ['==', ['id'], feature.id]);
+		});
+
+		map.on('mouseleave', 'regions', () => {
+			map.getCanvas().style.cursor = '';
+			map.setFilter('regions-highlighted', ['==', ['id'], null]);
 		});
 
 		updateOnViewChange();

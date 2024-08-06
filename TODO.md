@@ -35,47 +35,90 @@ flowchart TB
     endpoint2-..->flatgeobuf
 ```
 
-- (/) v0.1: show map bounding box as regions
+# green.houseofmoran.io
 
-  - (/) webapp
+- [x] v0.1: show map bounding box as regions
 
-    - (/) get example sveltekit app working on netlify
-      - (/) example sveltekit app working locally
-      - (/) deployed on netlify; https://deploy-preview-8--spectrum-green.netlify.app
-    - (/) show map, initially focussed on edinburgh
-      - (/) switch to default setup for sveltekit
-      - (/) add basic mapbox setup
-      - (/) switch to centered on edinburgh
-    - (/) call `regions` endpoint whenever bounding box changes
-    - (/) maps returned geojson to regions displayed on the map, which is cleared whenever the bounding box changes
-    - (/) hosted under spectrum.houseofmoran.io
-      - (/) create domain name mapped to netlify
-      - (/) configure netlify
+  - [x] webapp
 
-  - (/) service
-    - (/) create basic axum webapp, running on fly.io, showing "hello world"
-      - (/) basic axum service running locally
-      - (/) create fly.io `spectrum` app
-      - (/) add tracing setup, sending traces to honeycomb
-    - (/) `regions` endpoint that takes a bounding box and returns the bounding box as a polygon
+    - [x] get example sveltekit app working on netlify
+      - [x] example sveltekit app working locally
+      - [x] deployed on netlify; https://deploy-preview-8--spectrum-green.netlify.app
+    - [x] show map, initially focussed on edinburgh
+      - [x] switch to default setup for sveltekit
+      - [x] add basic mapbox setup
+      - [x] switch to centered on edinburgh
+    - [x] call `regions` endpoint whenever bounding box changes
+    - [x] maps returned geojson to regions displayed on the map, which is cleared whenever the bounding box changes
+    - [x] hosted under spectrum.houseofmoran.io
+      - [x] create domain name mapped to netlify
+      - [x] configure netlify
 
-- (x) v0.2: show openstreetmap regions
-  - (/) build
-    - (/) ingest openstreetmaps extract covering edinburgh
-    - (/) find regions (incomplete, as I don't know yet how to handle relations)
-    - (/) save as geojson and verify looks correct in geojson.io
-    - (/) save as flatgeobuf
-  - (/) data
-    - (/) just check in flatgeobuf file directly
-  - (/) service
-    - (/) find all polygons that are in the flatgeobuf within the bounding box and convert to geojson
-      - (/) locally
-      - (/) on fly.io
-- (/) v0.3: add basic search + cleanup pass
-  - (/) add mapbox location search
-  - (/) apply clippy hints
-- (x) v0.4: simple overlaps with fixed routes
-  - (x) union regions (some of the regions found overlap)
-  - (x) create a few arbitrary fixed paths across regions and show intersections
-- (x) ...
-- (x) support relations
+  - [x] service
+    - [x] create basic axum webapp, running on fly.io, showing "hello world"
+      - [x] basic axum service running locally
+      - [x] create fly.io `spectrum` app
+      - [x] add tracing setup, sending traces to honeycomb
+    - [x] `regions` endpoint that takes a bounding box and returns the bounding box as a polygon
+
+- [x] v0.2: show openstreetmap regions
+  - [x] build
+    - [x] ingest openstreetmaps extract covering edinburgh
+    - [x] find regions (incomplete, as I don't know yet how to handle relations)
+    - [x] save as geojson and verify looks correct in geojson.io
+    - [x] save as flatgeobuf
+  - [x] data
+    - [x] just check in flatgeobuf file directly
+  - [x] service
+    - [x] find all polygons that are in the flatgeobuf within the bounding box and convert to geojson
+      - [x] locally
+      - [x] on fly.io
+- [x] v0.3: add basic search + cleanup pass
+  - [x] add mapbox location search
+  - [x] apply clippy hints
+- [x] v0.4: collapse overlapping regions
+  - [x] union regions (some of the regions found overlap)
+  - [x] cleanups/tidy-ups
+- [ ] v0.5: specialise to green.houseofmoran.io
+  - [ ] switch netlify to be able to deploy multiple front-ends (green.houseofmoran.io and spectrum.houseofmoran.io)
+  - [ ] switch fly.io to deploy to geo.houseofmoran.io
+  - [ ] move current api to be under geo.houseofmoran.io/green/v1
+- [ ] v0.6: path overlaps
+  - [ ] create a few arbitrary fixed paths across regions and show intersections
+  - [ ] ...
+- [ ] ...
+- [ ] support relations
+
+alternative idea for avoiding having to pre-union everything:
+
+1. put all poloygons in an rtree
+2. take polygon describing route and finding intersection candidates in the rtree
+3. take only those candidates and union all them together
+
+- this should be way less than all possible
+
+4. intersect the route with that newly unioned shape
+
+ideas for generating greener routes:
+
+- dynamic perturbation:
+  - use a routing library to find walking/bicycle routes between two points and then:
+  - take the route, intersect with green areas, and then either:
+    - mark empty (no green) sections as blocked
+    - or, map green proportions to the cost of a section
+  - ask routing library for a better route based on above score
+  - iterate above, returning best found within x-millis
+- pre-generation + dynamic matching:
+  - take an area, subdivide, and find all walking/bicycle routes between centroids of areas
+  - score all routes by proportion of greenery
+  - dynamically:
+    - map from/to points to closest centroids
+    - lookup centroid1 to centroid2 route
+    - patch a route from->centroid1, centroid2->to, and assemble into a route as from->centroid1->centroid2->to
+- - green field (applies to all of above):
+  * build a heatmap for areas by:
+    - assigning a score to a block based on proportion of block which contains green (size of intersection)
+    - or, assigning a score by a flood-filling regions (treating green areas as a fluid which is allowed to expand)
+  * score route sections by overlap with field
+
+# spectrum.houseofmoran.io

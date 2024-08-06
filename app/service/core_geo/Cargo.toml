@@ -1,0 +1,13 @@
+[package]
+name = "core_geo"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tracing = { workspace = true }
+
+geo = { workspace = true }
+rstar = { workspace = true }
+
+test-log = { workspace = true }
+pretty_assertions = { workspace = true }
