@@ -90,6 +90,16 @@ flowchart TB
 - [ ] ...
 - [ ] support relations
 
+alternative idea for avoiding having to pre-union everything:
+
+1. put all poloygons in an rtree
+2. take polygon describing route and finding intersection candidates in the rtree
+3. take only those candidates and union all them together
+
+- this should be way less than all possible
+
+4. intersect the route with that newly unioned shape
+
 ideas for generating greener routes:
 
 - dynamic perturbation:
