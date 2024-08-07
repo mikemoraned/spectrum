@@ -4,7 +4,7 @@ use core_geo::union::union;
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
-use geo::{coord, BooleanOps, MultiPolygon, Rect};
+use geo::{coord, BooleanOps, MultiPolygon, Polygon, Rect};
 use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
@@ -43,7 +43,7 @@ impl Regions {
         &self,
         bounds: Bounds,
     ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
-        let geoms = self.load_area(&bounds).await?;
+        let geoms = self.load_regions(&bounds).await?;
 
         let unioned: Vec<Geometry<f64>> = union(geoms)?;
 
@@ -55,7 +55,7 @@ impl Regions {
         &self,
         bounds: Bounds,
     ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
-        let geometry = self.load_area(&bounds).await?;
+        let regions = self.load_regions(&bounds).await?;
 
         let bounds_width = (bounds.ne_lon - bounds.sw_lon).abs();
         let bounds_height = (bounds.ne_lat - bounds.sw_lat).abs();
@@ -66,8 +66,18 @@ impl Regions {
         x: bounds.ne_lon - (bounds_width / 5.0),
         y: bounds.sw_lat + (bounds_height / 2.0) - (0.02 * bounds_height / 2.0)};
         let route_rect = Rect::new(corner1, corner2);
+        let route_polygon = route_rect.to_polygon();
 
-        let polygons = geometry
+        let overlaps = Regions::find_regions_overlapping_route(&regions, &route_polygon)?;
+
+        Ok(GeometryCollection::from_iter(overlaps))
+    }
+
+    fn find_regions_overlapping_route(
+        regions: &Vec<Geometry>,
+        route: &Polygon,
+    ) -> Result<Vec<Geometry>, Box<dyn std::error::Error>> {
+        let polygons = regions
             .iter()
             .filter_map(|g| match g {
                 Geometry::Polygon(p) => Some(p.clone()),
@@ -75,13 +85,13 @@ impl Regions {
             })
             .collect::<Vec<_>>();
 
-        let route_rtree = RTree::bulk_load(vec![route_rect.to_polygon()]);
+        let route_rtree = RTree::bulk_load(vec![route.clone()]);
         let region_rtree = RTree::bulk_load(polygons);
         let mut overlap_candidates = vec![];
         for (poly, _) in region_rtree.intersection_candidates_with_other_tree(&route_rtree) {
             overlap_candidates.push(Geometry::Polygon(poly.clone()))
         }
-        let mut unioned = union(overlap_candidates)?;
+        let unioned = union(overlap_candidates)?;
 
         let union_polygons = unioned
             .iter()
@@ -90,19 +100,18 @@ impl Regions {
                 _ => None,
             })
             .collect::<Vec<_>>();
-        let intersection = MultiPolygon::new(vec![route_rect.to_polygon()])
-            .intersection(&MultiPolygon::new(union_polygons));
+        let intersection =
+            MultiPolygon::new(vec![route.clone()]).intersection(&MultiPolygon::new(union_polygons));
 
         let mut overlaps = vec![];
-        overlaps.push(Geometry::Rect(route_rect));
+        overlaps.push(Geometry::Polygon(route.clone()));
         overlaps.push(Geometry::MultiPolygon(intersection));
-        // overlaps.append(&mut unioned);
 
-        Ok(GeometryCollection::from_iter(overlaps))
+        Ok(overlaps)
     }
 
     #[instrument(skip(self))]
-    pub async fn load_area(
+    pub async fn load_regions(
         &self,
         bounds: &Bounds,
     ) -> Result<Vec<Geometry<f64>>, Box<dyn std::error::Error>> {
