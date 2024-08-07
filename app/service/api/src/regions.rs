@@ -57,6 +57,14 @@ impl Regions {
     ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
         let regions = self.load_regions(&bounds).await?;
 
+        let route_polygon = Regions::find_route(&bounds);
+
+        let overlaps = Regions::find_regions_overlapping_route(&regions, &route_polygon)?;
+
+        Ok(GeometryCollection::from_iter(overlaps))
+    }
+
+    fn find_route(bounds: &Bounds) -> Polygon<f64> {
         let bounds_width = (bounds.ne_lon - bounds.sw_lon).abs();
         let bounds_height = (bounds.ne_lat - bounds.sw_lat).abs();
         let corner1 = coord! {
@@ -65,12 +73,7 @@ impl Regions {
         let corner2 = coord! {
         x: bounds.ne_lon - (bounds_width / 5.0),
         y: bounds.sw_lat + (bounds_height / 2.0) - (0.02 * bounds_height / 2.0)};
-        let route_rect = Rect::new(corner1, corner2);
-        let route_polygon = route_rect.to_polygon();
-
-        let overlaps = Regions::find_regions_overlapping_route(&regions, &route_polygon)?;
-
-        Ok(GeometryCollection::from_iter(overlaps))
+        Rect::new(corner1, corner2).to_polygon()
     }
 
     fn find_regions_overlapping_route(
