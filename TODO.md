@@ -89,10 +89,14 @@ flowchart TB
     4. intersect the route polygon with that unioned area
 - [ ] v0.6: add real routes
 
-  - [ ] select the center of the bb and a random position in the bb as beginning/end points
-  - [ ] pass those to a route finder service to get a route; assume tha returns a polygon
-  - [ ] buffer the polygon
-  - [ ] find intersections of that polygon
+  - [x] select a couple of arbiratry poiints within the bb as start/end
+  - [x] get a walking route from stadia maps
+  - [x] show route as a line
+  - [ ] for each route returned:
+    - [ ] convert line to polygon
+    - [ ] buffer the polygon
+    - [ ] find intersections of that polygon with green areas
+    - [ ] show line + buffered polygon + intersections
 
 - [ ] specialise to green.houseofmoran.io
   - [ ] switch netlify to be able to deploy multiple front-ends (green.houseofmoran.io and spectrum.houseofmoran.io)
