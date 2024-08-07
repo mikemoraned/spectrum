@@ -31,4 +31,8 @@ tower-http = { workspace = true }
 tracing-subscriber = { workspace = true }
 clap = { workspace = true }
 
+ferrostar = { workspace = true }
+url = { workspace = true }
+reqwest = { workspace = true }
+
 core_geo = { path = "../core_geo" }

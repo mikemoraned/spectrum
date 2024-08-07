@@ -1,6 +1,10 @@
 use axum::extract::State;
+use axum::http::HeaderMap;
 use axum::{extract::Query, Json};
 use core_geo::union::union;
+use ferrostar::models::{GeographicCoordinate, UserLocation, Waypoint, WaypointKind};
+use ferrostar::routing_adapters::valhalla::ValhallaHttpRequestGenerator;
+use ferrostar::routing_adapters::{RouteRequest, RouteRequestGenerator};
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
@@ -14,7 +18,9 @@ use std::fs::File;
 use std::io::BufReader;
 use std::iter::FromIterator;
 use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 use tracing::{debug, instrument};
+use url::Url;
 
 use crate::state::AppState;
 
@@ -27,12 +33,23 @@ pub struct Bounds {
 }
 pub struct Regions {
     fgb_path: PathBuf,
+    route_url: Url,
 }
 
 impl Regions {
-    pub fn from_flatgeobuf(fgb_path: &Path) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_flatgeobuf(
+        fgb_path: &Path,
+        stadia_maps_api_key: &str,
+        stadia_maps_endpoint_base: &Url,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        let mut route_url = stadia_maps_endpoint_base.join("/route/v1")?;
+        let authenticated_route_url = route_url
+            .query_pairs_mut()
+            .append_pair("api_key", stadia_maps_api_key)
+            .finish();
         Ok(Regions {
             fgb_path: fgb_path.to_path_buf(),
+            route_url: authenticated_route_url.clone(),
         })
     }
 }
@@ -57,14 +74,17 @@ impl Regions {
     ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
         let regions = self.load_regions(&bounds).await?;
 
-        let route_polygon = Regions::find_route(&bounds);
+        let route_polygon = self.find_route(&bounds).await?;
 
         let overlaps = Regions::find_regions_overlapping_route(&regions, &route_polygon)?;
 
         Ok(GeometryCollection::from_iter(overlaps))
     }
 
-    fn find_route(bounds: &Bounds) -> Polygon<f64> {
+    async fn find_route(
+        &self,
+        bounds: &Bounds,
+    ) -> Result<Polygon<f64>, Box<dyn std::error::Error>> {
         let bounds_width = (bounds.ne_lon - bounds.sw_lon).abs();
         let bounds_height = (bounds.ne_lat - bounds.sw_lat).abs();
         let corner1 = coord! {
@@ -73,7 +93,45 @@ impl Regions {
         let corner2 = coord! {
         x: bounds.ne_lon - (bounds_width / 5.0),
         y: bounds.sw_lat + (bounds_height / 2.0) - (0.02 * bounds_height / 2.0)};
-        Rect::new(corner1, corner2).to_polygon()
+
+        let generator = ValhallaHttpRequestGenerator::new(
+            self.route_url.to_string().clone(),
+            "pedestrian".into(),
+            None,
+        );
+
+        let user_location = UserLocation {
+            coordinates: GeographicCoordinate {
+                lat: corner1.y,
+                lng: corner1.x,
+            },
+            horizontal_accuracy: 1.0,
+            course_over_ground: None,
+            timestamp: SystemTime::now(),
+            speed: None,
+        };
+        let waypoints: Vec<Waypoint> = vec![Waypoint {
+            coordinate: GeographicCoordinate {
+                lat: corner2.y,
+                lng: corner2.x,
+            },
+            kind: WaypointKind::Break,
+        }];
+
+        let RouteRequest::HttpPost { url, body, headers } =
+            generator.generate_request(user_location, waypoints)?;
+
+        let client = reqwest::Client::new();
+        let response = client
+            .post(url)
+            .body(body)
+            .headers(HeaderMap::try_from(&headers)?)
+            .send()
+            .await?;
+
+        debug!("Route response: {:?}", response);
+
+        Ok(Rect::new(corner1, corner2).to_polygon())
     }
 
     fn find_regions_overlapping_route(

@@ -1,6 +1,7 @@
 use std::{path::PathBuf, sync::Arc};
 
 use api::{
+    env::{load_public, load_secret},
     regions::{overlaps, regions, Regions},
     state::AppState,
     tracing::{init_opentelemetry_from_environment, init_safe_default_from_environment},
@@ -16,6 +17,7 @@ use tower_http::{
     cors::{Any, CorsLayer},
 };
 use tracing::info;
+use url::Url;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -55,6 +57,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         init_safe_default_from_environment()?;
     }
 
+    let stadia_maps_api_key = load_secret("STADIA_MAPS_API_KEY")?;
+    let stadia_maps_endpoint_base = Url::parse(&load_public("STADIA_MAPS_ENDPOINT_BASE")?)?;
+
     let cors = CorsLayer::new()
         .allow_methods([Method::GET])
         // allow requests from any origin
@@ -68,7 +73,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(cors)
         .layer(CompressionLayer::new())
         .with_state(AppState {
-            regions: Arc::new(Regions::from_flatgeobuf(&args.fgb)?),
+            regions: Arc::new(Regions::from_flatgeobuf(
+                &args.fgb,
+                &stadia_maps_api_key,
+                &stadia_maps_endpoint_base,
+            )?),
         });
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
