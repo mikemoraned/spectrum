@@ -3,8 +3,9 @@ use axum::http::HeaderMap;
 use axum::{extract::Query, Json};
 use core_geo::union::union;
 use ferrostar::models::{GeographicCoordinate, UserLocation, Waypoint, WaypointKind};
+use ferrostar::routing_adapters::osrm::OsrmResponseParser;
 use ferrostar::routing_adapters::valhalla::ValhallaHttpRequestGenerator;
-use ferrostar::routing_adapters::{RouteRequest, RouteRequestGenerator};
+use ferrostar::routing_adapters::{RouteRequest, RouteRequestGenerator, RouteResponseParser};
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
@@ -14,6 +15,7 @@ use geojson::FeatureCollection;
 use geojson::GeoJson;
 use rstar::RTree;
 use serde::Deserialize;
+use serde_json::Value;
 use std::fs::File;
 use std::io::BufReader;
 use std::iter::FromIterator;
@@ -121,6 +123,8 @@ impl Regions {
         let RouteRequest::HttpPost { url, body, headers } =
             generator.generate_request(user_location, waypoints)?;
 
+        debug!("Route body: {:?}", String::from_utf8(body.clone()));
+
         let client = reqwest::Client::new();
         let response = client
             .post(url)
@@ -130,6 +134,13 @@ impl Regions {
             .await?;
 
         debug!("Route response: {:?}", response);
+
+        let content = response.bytes().await?;
+        // let raw: Value = serde_json::from_slice(&content.to_vec())?;
+        // debug!("Raw response: {:?}", raw);
+        let routes = OsrmResponseParser::new(6).parse_response(content.to_vec())?;
+
+        debug!("Parsed route: {:?}", routes);
 
         Ok(Rect::new(corner1, corner2).to_polygon())
     }
