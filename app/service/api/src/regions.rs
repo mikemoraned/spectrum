@@ -9,7 +9,7 @@ use ferrostar::routing_adapters::{RouteRequest, RouteRequestGenerator, RouteResp
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
-use geo::{coord, BooleanOps, MultiPolygon, Polygon, Rect};
+use geo::{coord, BooleanOps, LineString, MultiPolygon, Polygon, Rect};
 use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
@@ -17,7 +17,7 @@ use rstar::RTree;
 use serde::Deserialize;
 use serde_json::Value;
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader, Lines};
 use std::iter::FromIterator;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
@@ -76,17 +76,21 @@ impl Regions {
     ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
         let regions = self.load_regions(&bounds).await?;
 
-        let route_polygon = self.find_route(&bounds).await?;
+        let route_polygon = self.find_route(&bounds)?;
 
-        let overlaps = Regions::find_regions_overlapping_route(&regions, &route_polygon)?;
+        let mut overlaps = Regions::find_regions_overlapping_route(&regions, &route_polygon)?;
+
+        overlaps.push(Geometry::LineString(
+            self.find_stadiamaps_route(&bounds).await?,
+        ));
 
         Ok(GeometryCollection::from_iter(overlaps))
     }
 
-    async fn find_route(
+    async fn find_stadiamaps_route(
         &self,
         bounds: &Bounds,
-    ) -> Result<Polygon<f64>, Box<dyn std::error::Error>> {
+    ) -> Result<LineString, Box<dyn std::error::Error>> {
         let bounds_width = (bounds.ne_lon - bounds.sw_lon).abs();
         let bounds_height = (bounds.ne_lat - bounds.sw_lat).abs();
         let corner1 = coord! {
@@ -136,11 +140,31 @@ impl Regions {
         debug!("Route response: {:?}", response);
 
         let content = response.bytes().await?;
-        // let raw: Value = serde_json::from_slice(&content.to_vec())?;
-        // debug!("Raw response: {:?}", raw);
         let routes = OsrmResponseParser::new(6).parse_response(content.to_vec())?;
 
-        debug!("Parsed route: {:?}", routes);
+        debug!("Parsed routes: {:?}", routes);
+
+        let route = routes.first().unwrap();
+        let route_line = LineString::new(
+            route
+                .geometry
+                .iter()
+                .map(|c| coord!(x: c.lng, y: c.lat))
+                .collect(),
+        );
+
+        Ok(route_line)
+    }
+
+    fn find_route(&self, bounds: &Bounds) -> Result<Polygon<f64>, Box<dyn std::error::Error>> {
+        let bounds_width = (bounds.ne_lon - bounds.sw_lon).abs();
+        let bounds_height = (bounds.ne_lat - bounds.sw_lat).abs();
+        let corner1 = coord! {
+        x: bounds.sw_lon + (bounds_width / 5.0),
+        y: bounds.ne_lat - (bounds_height / 2.0) + (0.02 * bounds_height / 2.0) };
+        let corner2 = coord! {
+        x: bounds.ne_lon - (bounds_width / 5.0),
+        y: bounds.sw_lat + (bounds_height / 2.0) - (0.02 * bounds_height / 2.0)};
 
         Ok(Rect::new(corner1, corner2).to_polygon())
     }
