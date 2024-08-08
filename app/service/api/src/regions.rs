@@ -82,7 +82,7 @@ impl Regions {
         // let mut overlaps = Regions::find_regions_overlapping_route(&regions, &route_polygon)?;
         let mut overlaps = vec![];
 
-        overlaps.push(Geometry::LineString(stadiamaps_route.clone()));
+        // overlaps.push(Geometry::LineString(stadiamaps_route.clone()));
         overlaps.push(Geometry::MultiPolygon(route_polygon.clone()));
 
         Ok(GeometryCollection::from_iter(overlaps))
