@@ -73,6 +73,8 @@ impl Regions {
         &self,
         bounds: Bounds,
     ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
+        use geo_buffer::buffer_multi_polygon;
+
         let regions = self.load_regions(&bounds).await?;
 
         let stadiamaps_route = self.find_stadiamaps_route(&bounds).await?;
@@ -82,12 +84,14 @@ impl Regions {
             .to_polygon();
 
         let possible = Regions::find_possibly_overlapping_regions(&regions, &route_bounding_rect)?;
+        let buffered = buffer_multi_polygon(&possible, 0.0001);
 
         let mut overlaps = vec![];
 
         overlaps.push(Geometry::LineString(stadiamaps_route.clone()));
         overlaps.push(Geometry::Polygon(route_bounding_rect.clone()));
         overlaps.push(Geometry::MultiPolygon(possible.clone()));
+        overlaps.push(Geometry::MultiPolygon(buffered.clone()));
 
         Ok(GeometryCollection::from_iter(overlaps))
     }
@@ -190,42 +194,6 @@ impl Regions {
             .collect::<Vec<_>>();
 
         Ok(MultiPolygon::new(union_polygons))
-    }
-
-    fn find_regions_overlapping_route(
-        regions: &Vec<Geometry>,
-        route: &Vec<Polygon>,
-    ) -> Result<Vec<Geometry>, Box<dyn std::error::Error>> {
-        let polygons = regions
-            .iter()
-            .filter_map(|g| match g {
-                Geometry::Polygon(p) => Some(p.clone()),
-                _ => None,
-            })
-            .collect::<Vec<_>>();
-
-        let route_rtree = RTree::bulk_load(route.clone());
-        let region_rtree = RTree::bulk_load(polygons);
-        let mut overlap_candidates = vec![];
-        for (poly, _) in region_rtree.intersection_candidates_with_other_tree(&route_rtree) {
-            overlap_candidates.push(Geometry::Polygon(poly.clone()))
-        }
-        let unioned = union(overlap_candidates)?;
-
-        let union_polygons = unioned
-            .iter()
-            .filter_map(|g| match g {
-                Geometry::Polygon(p) => Some(p.clone()),
-                _ => None,
-            })
-            .collect::<Vec<_>>();
-        let intersection =
-            MultiPolygon::new(route.clone()).intersection(&MultiPolygon::new(union_polygons));
-
-        let mut overlaps = vec![];
-        overlaps.push(Geometry::MultiPolygon(intersection));
-
-        Ok(overlaps)
     }
 
     #[instrument(skip(self))]
