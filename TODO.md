@@ -93,10 +93,12 @@ flowchart TB
   - [x] get a walking route from stadia maps
   - [x] show route as a line
   - [ ] for each route returned:
-    - [ ] convert line to polygon
-    - [ ] buffer the polygon
-    - [ ] find intersections of that polygon with green areas
-    - [ ] show line + buffered polygon + intersections
+    - [ ] find minimal bounding rect of the route line
+    - [x] find candidate intersections of that rect with green areas
+    - [x] union those areas together
+    - [ ] buffer that union
+    - [ ] find intersections between that buffered union and the route line
+    - [ ] show all
 
 - [ ] specialise to green.houseofmoran.io
   - [ ] switch netlify to be able to deploy multiple front-ends (green.houseofmoran.io and spectrum.houseofmoran.io)

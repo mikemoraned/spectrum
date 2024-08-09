@@ -9,7 +9,7 @@ use ferrostar::routing_adapters::{RouteRequest, RouteRequestGenerator, RouteResp
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
-use geo::{coord, BooleanOps, Coord, LineString, MultiPolygon, Polygon};
+use geo::{coord, BooleanOps, BoundingRect, LineString, MultiPolygon, Polygon};
 use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
@@ -23,7 +23,6 @@ use std::time::SystemTime;
 use tracing::{debug, instrument};
 use url::Url;
 
-use crate::buffer::buffer_linestring;
 use crate::state::AppState;
 
 #[derive(Deserialize, Debug)]
@@ -77,13 +76,18 @@ impl Regions {
         let regions = self.load_regions(&bounds).await?;
 
         let stadiamaps_route = self.find_stadiamaps_route(&bounds).await?;
-        let route_polygon = buffer_linestring(&stadiamaps_route, 0.001);
+        let route_bounding_rect = stadiamaps_route
+            .bounding_rect()
+            .expect("some bounding rect")
+            .to_polygon();
 
-        // let mut overlaps = Regions::find_regions_overlapping_route(&regions, &route_polygon)?;
+        let possible = Regions::find_possibly_overlapping_regions(&regions, &route_bounding_rect)?;
+
         let mut overlaps = vec![];
 
-        // overlaps.push(Geometry::LineString(stadiamaps_route.clone()));
-        overlaps.push(Geometry::MultiPolygon(route_polygon.clone()));
+        overlaps.push(Geometry::LineString(stadiamaps_route.clone()));
+        overlaps.push(Geometry::Polygon(route_bounding_rect.clone()));
+        overlaps.push(Geometry::MultiPolygon(possible.clone()));
 
         Ok(GeometryCollection::from_iter(overlaps))
     }
@@ -155,6 +159,37 @@ impl Regions {
         );
 
         Ok(route_line)
+    }
+
+    fn find_possibly_overlapping_regions(
+        regions: &Vec<Geometry>,
+        route: &Polygon,
+    ) -> Result<MultiPolygon, Box<dyn std::error::Error>> {
+        let polygons = regions
+            .iter()
+            .filter_map(|g| match g {
+                Geometry::Polygon(p) => Some(p.clone()),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+
+        let route_rtree = RTree::bulk_load(vec![route.clone()]);
+        let region_rtree = RTree::bulk_load(polygons);
+        let mut overlap_candidates = vec![];
+        for (poly, _) in region_rtree.intersection_candidates_with_other_tree(&route_rtree) {
+            overlap_candidates.push(Geometry::Polygon(poly.clone()))
+        }
+        let unioned = union(overlap_candidates)?;
+
+        let union_polygons = unioned
+            .iter()
+            .filter_map(|g| match g {
+                Geometry::Polygon(p) => Some(p.clone()),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+
+        Ok(MultiPolygon::new(union_polygons))
     }
 
     fn find_regions_overlapping_route(
