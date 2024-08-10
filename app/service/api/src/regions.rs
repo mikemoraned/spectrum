@@ -1,7 +1,7 @@
 use axum::extract::State;
 use axum::http::HeaderMap;
 use axum::{extract::Query, Json};
-use core_geo::buffer::buffer_polygon;
+use core_geo::buffer::{buffer_multi_polygon, buffer_polygon};
 use core_geo::union::union;
 use ferrostar::models::{GeographicCoordinate, UserLocation, Waypoint, WaypointKind};
 use ferrostar::routing_adapters::osrm::OsrmResponseParser;
@@ -10,7 +10,7 @@ use ferrostar::routing_adapters::{RouteRequest, RouteRequestGenerator, RouteResp
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
-use geo::{coord, BoundingRect, LineString, MultiPolygon, Polygon};
+use geo::{coord, Area, BoundingRect, LineString, MultiPolygon, Polygon};
 use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
@@ -83,14 +83,17 @@ impl Regions {
             .to_polygon();
 
         let possible = Regions::find_possibly_overlapping_regions(&regions, &route_bounding_rect)?;
-        // let buffered = buffer_polygon(&possible, 0.0001);
-        let buffered = buffer_polygon(&route_bounding_rect.clone(), 0.001);
+        let possible_example = select_largest_polygon(&possible)?;
+        let buffer_distance = 0.001;
+        // let buffered = buffer_multi_polygon(&possible, buffer_distance);
+        let buffered = buffer_polygon(&possible_example.clone(), buffer_distance);
 
         let mut overlaps = vec![];
 
         overlaps.push(Geometry::LineString(stadiamaps_route.clone()));
         overlaps.push(Geometry::Polygon(route_bounding_rect.clone()));
-        overlaps.push(Geometry::MultiPolygon(possible.clone()));
+        // overlaps.push(Geometry::MultiPolygon(possible.clone()));
+        overlaps.push(Geometry::Polygon(possible_example.clone()));
         overlaps.push(Geometry::MultiPolygon(buffered.clone()));
 
         Ok(GeometryCollection::from_iter(overlaps))
@@ -216,6 +219,19 @@ impl Regions {
 
         Ok(geoms)
     }
+}
+
+fn select_largest_polygon(multi: &MultiPolygon) -> Result<Polygon, Box<dyn std::error::Error>> {
+    let mut largest = None;
+    let mut largest_area = 0.0;
+    for p in multi.iter() {
+        let area = p.signed_area();
+        if area > largest_area {
+            largest = Some(p.clone());
+            largest_area = area;
+        }
+    }
+    largest.ok_or("No smallest polygon found".into())
 }
 
 #[instrument(skip(state))]
