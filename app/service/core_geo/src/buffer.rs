@@ -28,10 +28,10 @@ pub fn buffer_polygon(poly: &Polygon<f64>, distance: f64) -> MultiPolygon<f64> {
             .collect();
         coords.push(coords[0]);
         let poly = Polygon::new(LineString::from(coords), vec![]);
-        if poly.is_valid() {
-            debug!("poly is valid");
-        } else {
+        if !poly.is_valid() {
             debug!("poly is invalid {:?}", poly.explain_invalidity());
+            debug!("polyline: {:?}", polyline);
+            debug!("poly: {:?}", poly);
         }
         poly
     }
