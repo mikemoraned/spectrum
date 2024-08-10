@@ -97,6 +97,7 @@ flowchart TB
     - [x] find candidate intersections of that rect with green areas
     - [x] union those areas together
     - [ ] buffer that union
+      - [ ] the `buffer_multi_polygon` from `geo_buffer` seems either slow or unstable (or at least, triggering floating-point instability in `geo`). it also is apparently currently based on an older version of geo which has known bugs; https://github.com/1011-git/geo-buffer/issues/1, https://github.com/1011-git/geo-buffer/issues/4. so, do a version of this that is based on `cavalier_contours` instead.
     - [ ] find intersections between that buffered union and the route line
     - [ ] show all
 

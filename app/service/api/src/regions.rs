@@ -1,6 +1,7 @@
 use axum::extract::State;
 use axum::http::HeaderMap;
 use axum::{extract::Query, Json};
+use core_geo::buffer::buffer_multi_polygon;
 use core_geo::union::union;
 use ferrostar::models::{GeographicCoordinate, UserLocation, Waypoint, WaypointKind};
 use ferrostar::routing_adapters::osrm::OsrmResponseParser;
@@ -73,8 +74,6 @@ impl Regions {
         &self,
         bounds: Bounds,
     ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
-        use geo_buffer::buffer_multi_polygon;
-
         let regions = self.load_regions(&bounds).await?;
 
         let stadiamaps_route = self.find_stadiamaps_route(&bounds).await?;
