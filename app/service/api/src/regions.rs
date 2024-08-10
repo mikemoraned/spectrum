@@ -1,7 +1,7 @@
 use axum::extract::State;
 use axum::http::HeaderMap;
 use axum::{extract::Query, Json};
-use core_geo::buffer::buffer_multi_polygon;
+use core_geo::buffer::buffer_polygon;
 use core_geo::union::union;
 use ferrostar::models::{GeographicCoordinate, UserLocation, Waypoint, WaypointKind};
 use ferrostar::routing_adapters::osrm::OsrmResponseParser;
@@ -10,7 +10,7 @@ use ferrostar::routing_adapters::{RouteRequest, RouteRequestGenerator, RouteResp
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
-use geo::{coord, BooleanOps, BoundingRect, LineString, MultiPolygon, Polygon};
+use geo::{coord, BoundingRect, LineString, MultiPolygon, Polygon};
 use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
@@ -83,12 +83,13 @@ impl Regions {
             .to_polygon();
 
         let possible = Regions::find_possibly_overlapping_regions(&regions, &route_bounding_rect)?;
-        let buffered = buffer_multi_polygon(&possible, 0.0001);
+        // let buffered = buffer_polygon(&possible, 0.0001);
+        let buffered = buffer_polygon(&route_bounding_rect.clone(), 0.0001);
 
         let mut overlaps = vec![];
 
         overlaps.push(Geometry::LineString(stadiamaps_route.clone()));
-        overlaps.push(Geometry::Polygon(route_bounding_rect.clone()));
+        // overlaps.push(Geometry::Polygon(route_bounding_rect.clone()));
         overlaps.push(Geometry::MultiPolygon(possible.clone()));
         overlaps.push(Geometry::MultiPolygon(buffered.clone()));
 

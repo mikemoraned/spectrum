@@ -8,6 +8,7 @@ tracing = { workspace = true }
 
 geo = { workspace = true }
 rstar = { workspace = true }
+cavalier_contours = { workspace = true }
 
 test-log = { workspace = true }
 pretty_assertions = { workspace = true }
