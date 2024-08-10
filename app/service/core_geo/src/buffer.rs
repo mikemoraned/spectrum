@@ -6,8 +6,8 @@ pub fn buffer_polygon(poly: &Polygon<f64>, distance: f64) -> MultiPolygon<f64> {
     let vertex_iter = coords_iter.map(|c| PlineVertex::new(c.x, c.y, 0.0));
     let polyline = Polyline::from_iter(vertex_iter, true);
 
-    // let offsetted = polyline.parallel_offset(-1.0 * distance);
-    let offsetted = vec![polyline.clone()];
+    let offsetted = polyline.parallel_offset(-1.0 * distance);
+    // let offsetted = vec![polyline.clone()];
 
     fn from_polyline(polyline: Polyline) -> Polygon {
         let coords: Vec<Coord> = polyline

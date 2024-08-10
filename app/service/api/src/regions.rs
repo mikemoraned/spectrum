@@ -84,12 +84,12 @@ impl Regions {
 
         let possible = Regions::find_possibly_overlapping_regions(&regions, &route_bounding_rect)?;
         // let buffered = buffer_polygon(&possible, 0.0001);
-        let buffered = buffer_polygon(&route_bounding_rect.clone(), 0.0001);
+        let buffered = buffer_polygon(&route_bounding_rect.clone(), 0.001);
 
         let mut overlaps = vec![];
 
         overlaps.push(Geometry::LineString(stadiamaps_route.clone()));
-        // overlaps.push(Geometry::Polygon(route_bounding_rect.clone()));
+        overlaps.push(Geometry::Polygon(route_bounding_rect.clone()));
         overlaps.push(Geometry::MultiPolygon(possible.clone()));
         overlaps.push(Geometry::MultiPolygon(buffered.clone()));
 
