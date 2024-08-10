@@ -2,7 +2,8 @@ use cavalier_contours::polyline::{
     PlineCreation, PlineOffsetOptions, PlineSource, PlineVertex, Polyline,
 };
 use geo::{Coord, CoordsIter, LineString, MultiPolygon, Polygon};
-use tracing::trace;
+use geo_validity_check::Valid;
+use tracing::{debug, trace};
 
 pub fn buffer_polygon(poly: &Polygon<f64>, distance: f64) -> MultiPolygon<f64> {
     let coords_iter = poly.exterior().coords_iter();
@@ -26,7 +27,13 @@ pub fn buffer_polygon(poly: &Polygon<f64>, distance: f64) -> MultiPolygon<f64> {
             .map(|v| Coord::from((v.x, v.y)))
             .collect();
         coords.push(coords[0]);
-        Polygon::new(LineString::from(coords), vec![])
+        let poly = Polygon::new(LineString::from(coords), vec![]);
+        if poly.is_valid() {
+            debug!("poly is valid");
+        } else {
+            debug!("poly is invalid {:?}", poly.explain_invalidity());
+        }
+        poly
     }
 
     let polygons = offsetted.into_iter().map(from_polyline).collect::<Vec<_>>();

@@ -11,6 +11,7 @@ use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
 use geo::{coord, Area, BoundingRect, LineString, MultiPolygon, Polygon};
+use geo_validity_check::Valid;
 use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
@@ -85,6 +86,14 @@ impl Regions {
         let possible = Regions::find_possibly_overlapping_regions(&regions, &route_bounding_rect)?;
         let possible_example = select_largest_polygon(&possible)?;
         let buffer_distance = 0.001;
+        if possible_example.is_valid() {
+            debug!("example is valid");
+        } else {
+            debug!(
+                "example is invalid {:?}",
+                possible_example.explain_invalidity()
+            );
+        }
         // let buffered = buffer_multi_polygon(&possible, buffer_distance);
         let buffered = buffer_polygon(&possible_example.clone(), buffer_distance);
 

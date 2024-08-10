@@ -18,6 +18,7 @@ geo = "0.28.0"
 flatgeobuf = "4.2.1"
 geozero = "0.13.0"
 cavalier_contours = "0.4.0"
+geo-validity-check = "0.1.0"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 
