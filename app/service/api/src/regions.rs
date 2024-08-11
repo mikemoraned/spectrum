@@ -1,15 +1,10 @@
 use axum::extract::State;
-use axum::http::HeaderMap;
 use axum::{extract::Query, Json};
 use core_geo::union::union;
-use ferrostar::models::{GeographicCoordinate, UserLocation, Waypoint, WaypointKind};
-use ferrostar::routing_adapters::osrm::OsrmResponseParser;
-use ferrostar::routing_adapters::valhalla::ValhallaHttpRequestGenerator;
-use ferrostar::routing_adapters::{RouteRequest, RouteRequestGenerator, RouteResponseParser};
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
-use geo::{coord, BooleanOps, BoundingRect, LineString, MultiLineString, MultiPolygon, Polygon};
+use geo::{BooleanOps, BoundingRect, LineString, MultiLineString, MultiPolygon, Polygon};
 use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
@@ -19,39 +14,26 @@ use std::fs::File;
 use std::io::BufReader;
 use std::iter::FromIterator;
 use std::path::{Path, PathBuf};
-use std::time::SystemTime;
 use tracing::{debug, instrument};
-use url::Url;
 
 use crate::state::AppState;
 
 #[derive(Deserialize, Debug)]
 pub struct Bounds {
-    sw_lat: f64,
-    sw_lon: f64,
-    ne_lat: f64,
-    ne_lon: f64,
+    pub(crate) sw_lat: f64,
+    pub(crate) sw_lon: f64,
+    pub(crate) ne_lat: f64,
+    pub(crate) ne_lon: f64,
 }
 pub struct Regions {
     fgb_path: PathBuf,
-    route_url: Url,
 }
 
 impl Regions {
-    pub fn from_flatgeobuf(
-        fgb_path: &Path,
-        stadia_maps_api_key: &str,
-        stadia_maps_endpoint_base: &Url,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
-        let mut route_url = stadia_maps_endpoint_base.join("/route/v1")?;
-        let authenticated_route_url = route_url
-            .query_pairs_mut()
-            .append_pair("api_key", stadia_maps_api_key)
-            .finish();
-        Ok(Regions {
+    pub fn from_flatgeobuf(fgb_path: &Path) -> Self {
+        Regions {
             fgb_path: fgb_path.to_path_buf(),
-            route_url: authenticated_route_url.clone(),
-        })
+        }
     }
 }
 
@@ -61,7 +43,7 @@ struct LabelledRoute {
 }
 
 impl Regions {
-    #[instrument(skip(self))]
+    #[instrument(skip(self, bounds))]
     pub async fn regions(
         &self,
         bounds: Bounds,
@@ -73,93 +55,26 @@ impl Regions {
         Ok(GeometryCollection::from_iter(unioned))
     }
 
-    #[instrument(skip(self))]
-    pub async fn route(&self, bounds: Bounds) -> Result<LabelledRoute, Box<dyn std::error::Error>> {
+    #[instrument(skip(self, route, bounds))]
+    pub async fn label_route(
+        &self,
+        route: &LineString<f64>,
+        bounds: &Bounds,
+    ) -> Result<LabelledRoute, Box<dyn std::error::Error>> {
         let regions = self.load_regions(&bounds).await?;
 
-        let stadiamaps_route = self.find_stadiamaps_route(&bounds).await?;
-        let route_bounding_rect = stadiamaps_route
+        let route_bounding_rect = route
             .bounding_rect()
             .expect("some bounding rect")
             .to_polygon();
 
         let possible = Regions::find_possibly_overlapping_regions(&regions, &route_bounding_rect)?;
-        let overlaps = possible.clip(&MultiLineString::new(vec![stadiamaps_route.clone()]), false);
+        let overlaps = possible.clip(&MultiLineString::new(vec![route.clone()]), false);
 
         Ok(LabelledRoute {
-            route: stadiamaps_route,
+            route: route.clone(),
             green: overlaps,
         })
-    }
-
-    async fn find_stadiamaps_route(
-        &self,
-        bounds: &Bounds,
-    ) -> Result<LineString, Box<dyn std::error::Error>> {
-        let bounds_width = (bounds.ne_lon - bounds.sw_lon).abs();
-        let bounds_height = (bounds.ne_lat - bounds.sw_lat).abs();
-        let corner1 = coord! {
-        x: bounds.sw_lon + (bounds_width / 5.0),
-        y: bounds.ne_lat - (bounds_height / 2.0) + (0.02 * bounds_height / 2.0) };
-        let corner2 = coord! {
-        x: bounds.ne_lon - (bounds_width / 5.0),
-        y: bounds.sw_lat + (bounds_height / 2.0) - (0.02 * bounds_height / 2.0)};
-
-        let generator = ValhallaHttpRequestGenerator::new(
-            self.route_url.to_string().clone(),
-            "pedestrian".into(),
-            None,
-        );
-
-        let user_location = UserLocation {
-            coordinates: GeographicCoordinate {
-                lat: corner1.y,
-                lng: corner1.x,
-            },
-            horizontal_accuracy: 1.0,
-            course_over_ground: None,
-            timestamp: SystemTime::now(),
-            speed: None,
-        };
-        let waypoints: Vec<Waypoint> = vec![Waypoint {
-            coordinate: GeographicCoordinate {
-                lat: corner2.y,
-                lng: corner2.x,
-            },
-            kind: WaypointKind::Break,
-        }];
-
-        let RouteRequest::HttpPost { url, body, headers } =
-            generator.generate_request(user_location, waypoints)?;
-
-        debug!("Route body: {:?}", String::from_utf8(body.clone()));
-
-        let client = reqwest::Client::new();
-        let response = client
-            .post(url)
-            .body(body)
-            .headers(HeaderMap::try_from(&headers)?)
-            .send()
-            .await?;
-
-        debug!("Route response: {:?}", response);
-
-        let content = response.bytes().await?;
-        let routes = OsrmResponseParser::new(6).parse_response(content.to_vec())?;
-
-        debug!("Parsed routes: {:?}", routes);
-        debug!("Converting {:?} routes", routes.len());
-
-        let route = routes.first().unwrap();
-        let route_line = LineString::new(
-            route
-                .geometry
-                .iter()
-                .map(|c| coord!(x: c.lng, y: c.lat))
-                .collect(),
-        );
-
-        Ok(route_line)
     }
 
     fn find_possibly_overlapping_regions(
@@ -228,7 +143,9 @@ pub async fn route(
     Query(bounds): Query<Bounds>,
 ) -> Json<serde_json::Value> {
     let regions = state.regions.clone();
-    let labelled_route = regions.route(bounds).await.unwrap();
+    let routing = state.routing.clone();
+    let route = routing.find_route(&bounds).await.unwrap();
+    let labelled_route = regions.label_route(&route, &bounds).await.unwrap();
     let route_geojson = as_geojson(&GeometryCollection::from(vec![Geometry::LineString(
         labelled_route.route,
     )]));

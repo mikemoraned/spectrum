@@ -1,3 +1,4 @@
+pub mod routing;
 pub mod env;
 pub mod regions;
 pub mod state;

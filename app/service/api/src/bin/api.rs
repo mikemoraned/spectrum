@@ -3,6 +3,7 @@ use std::{path::PathBuf, sync::Arc};
 use api::{
     env::{load_public, load_secret},
     regions::{regions, route, Regions},
+    routing::StadiaMapsRouting,
     state::AppState,
     tracing::{init_opentelemetry_from_environment, init_safe_default_from_environment},
 };
@@ -73,8 +74,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(cors)
         .layer(CompressionLayer::new())
         .with_state(AppState {
-            regions: Arc::new(Regions::from_flatgeobuf(
-                &args.fgb,
+            regions: Arc::new(Regions::from_flatgeobuf(&args.fgb)),
+            routing: Arc::new(StadiaMapsRouting::new(
                 &stadia_maps_api_key,
                 &stadia_maps_endpoint_base,
             )?),
