@@ -36,65 +36,49 @@
 	});
 
 	async function initialiseSource() {
-		const source = {
+		map.addSource('route', {
 			type: 'geojson',
 			data: null
-		};
-
-		map.addSource('regions', source);
+		});
+		map.addSource('route-green', {
+			type: 'geojson',
+			data: null
+		});
 
 		map.addLayer({
-			id: 'regions-borders',
+			id: 'route',
 			type: 'line',
-			source: 'regions',
+			source: 'route',
 			layout: {},
 			paint: {
 				'line-color': 'black'
 			}
 		});
+
 		map.addLayer({
-			id: 'regions',
-			type: 'fill',
-			source: 'regions',
+			id: 'route-green',
+			type: 'line',
+			source: 'route-green',
 			layout: {},
 			paint: {
-				'fill-color': '#0080ff', // blue color fill
-				'fill-opacity': 0.01
+				'line-color': 'green',
+				'line-width': 5
 			}
-		});
-		map.addLayer({
-			id: 'regions-highlighted',
-			type: 'fill',
-			source: 'regions',
-			layout: {},
-			paint: {
-				'fill-color': '#0080ff', // blue color fill
-				'fill-opacity': 0.5
-			},
-			filter: ['==', ['id'], null]
-		});
-
-		map.on('mousemove', 'regions', (e) => {
-			map.getCanvas().style.cursor = 'pointer';
-
-			const feature = e.features[0];
-			console.dir(feature);
-			map.setFilter('regions-highlighted', ['==', ['id'], feature.id]);
-		});
-
-		map.on('mouseleave', 'regions', () => {
-			map.getCanvas().style.cursor = '';
-			map.setFilter('regions-highlighted', ['==', ['id'], null]);
 		});
 
 		updateOnViewChange();
 	}
 
-	async function fetchRegions(bounds) {
+	function convertBoundsToQueryString(bounds) {
 		const sw = bounds.getSouthWest();
 		const ne = bounds.getNorthEast();
 		const q = `?sw_lat=${sw.lat}&sw_lon=${sw.lng}&ne_lat=${ne.lat}&ne_lon=${ne.lng}`;
-		const service_url = `${PUBLIC_API_BASE_URL}overlaps${q}`;
+		return q;
+	}
+
+	async function fetchRoute(bounds) {
+		const q = convertBoundsToQueryString(bounds);
+		const service_url = `${PUBLIC_API_BASE_URL}v2/route${q}`;
 		console.log('calling service ', service_url, ' ...');
 		const response = await fetch(service_url);
 		const geojson = response.json();
@@ -106,12 +90,12 @@
 		console.log('view changed');
 		const bounds = map.getBounds();
 		console.log('bounds, ', bounds);
-		console.log('triggering load of geojson');
-		fetchRegions(bounds).then((geojson) => {
-			console.log('geojson loaded');
-			const source = map.getSource('regions');
-			source.setData(geojson);
-			console.log('source updated');
+		console.log('triggering load');
+		fetchRoute(bounds).then((json) => {
+			console.log('json loaded');
+			map.getSource('route').setData(json.route);
+			map.getSource('route-green').setData(json.green);
+			console.log('sources updated');
 		});
 	}
 
