@@ -2,7 +2,7 @@ use std::{path::PathBuf, sync::Arc};
 
 use api::{
     env::{load_public, load_secret},
-    regions::{overlaps, regions, Regions},
+    regions::{regions, route, Regions},
     state::AppState,
     tracing::{init_opentelemetry_from_environment, init_safe_default_from_environment},
 };
@@ -68,7 +68,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .route("/v1/regions", get(regions))
-        .route("/v1/overlaps", get(overlaps))
+        .route("/v1/route", get(route))
         .route("/health", get(health))
         .layer(cors)
         .layer(CompressionLayer::new())

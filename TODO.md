@@ -98,7 +98,7 @@ flowchart TB
     - [x] union those areas together
     - [x] find intersections between that union and the route line
     - [ ] show all, in different layers
-      - [ ] show route in black
+      - [x] show route in black
       - [ ] show overlapping segments in dark green
       - [ ] show all green areas in light green
   - [ ] refactor / remove unneeded code / dependencies

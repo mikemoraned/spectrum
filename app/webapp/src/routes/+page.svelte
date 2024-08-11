@@ -36,65 +36,34 @@
 	});
 
 	async function initialiseSource() {
-		const source = {
+		map.addSource('route', {
 			type: 'geojson',
 			data: null
-		};
-
-		map.addSource('regions', source);
+		});
 
 		map.addLayer({
-			id: 'regions-borders',
+			id: 'route',
 			type: 'line',
-			source: 'regions',
+			source: 'route',
 			layout: {},
 			paint: {
 				'line-color': 'black'
 			}
 		});
-		map.addLayer({
-			id: 'regions',
-			type: 'fill',
-			source: 'regions',
-			layout: {},
-			paint: {
-				'fill-color': '#0080ff', // blue color fill
-				'fill-opacity': 0.01
-			}
-		});
-		map.addLayer({
-			id: 'regions-highlighted',
-			type: 'fill',
-			source: 'regions',
-			layout: {},
-			paint: {
-				'fill-color': '#0080ff', // blue color fill
-				'fill-opacity': 0.5
-			},
-			filter: ['==', ['id'], null]
-		});
-
-		map.on('mousemove', 'regions', (e) => {
-			map.getCanvas().style.cursor = 'pointer';
-
-			const feature = e.features[0];
-			console.dir(feature);
-			map.setFilter('regions-highlighted', ['==', ['id'], feature.id]);
-		});
-
-		map.on('mouseleave', 'regions', () => {
-			map.getCanvas().style.cursor = '';
-			map.setFilter('regions-highlighted', ['==', ['id'], null]);
-		});
 
 		updateOnViewChange();
 	}
 
-	async function fetchRegions(bounds) {
+	function convertBoundsToQueryString(bounds) {
 		const sw = bounds.getSouthWest();
 		const ne = bounds.getNorthEast();
 		const q = `?sw_lat=${sw.lat}&sw_lon=${sw.lng}&ne_lat=${ne.lat}&ne_lon=${ne.lng}`;
-		const service_url = `${PUBLIC_API_BASE_URL}overlaps${q}`;
+		return q;
+	}
+
+	async function fetchRoute(bounds) {
+		const q = convertBoundsToQueryString(bounds);
+		const service_url = `${PUBLIC_API_BASE_URL}route${q}`;
 		console.log('calling service ', service_url, ' ...');
 		const response = await fetch(service_url);
 		const geojson = response.json();
@@ -107,9 +76,9 @@
 		const bounds = map.getBounds();
 		console.log('bounds, ', bounds);
 		console.log('triggering load of geojson');
-		fetchRegions(bounds).then((geojson) => {
+		fetchRoute(bounds).then((geojson) => {
 			console.log('geojson loaded');
-			const source = map.getSource('regions');
+			const source = map.getSource('route');
 			source.setData(geojson);
 			console.log('source updated');
 		});

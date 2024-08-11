@@ -9,9 +9,7 @@ use ferrostar::routing_adapters::{RouteRequest, RouteRequestGenerator, RouteResp
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
-use geo::{
-    coord, Area, BooleanOps, BoundingRect, LineString, MultiLineString, MultiPolygon, Polygon,
-};
+use geo::{coord, BooleanOps, BoundingRect, LineString, MultiLineString, MultiPolygon, Polygon};
 use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
@@ -91,6 +89,18 @@ impl Regions {
         display.push(Geometry::Polygon(route_bounding_rect.clone()));
         // display.push(Geometry::MultiPolygon(possible.clone()));
         display.push(Geometry::MultiLineString(overlaps.clone()));
+
+        Ok(GeometryCollection::from_iter(display))
+    }
+
+    #[instrument(skip(self))]
+    pub async fn route(
+        &self,
+        bounds: Bounds,
+    ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
+        let stadiamaps_route = self.find_stadiamaps_route(&bounds).await?;
+        let mut display = vec![];
+        display.push(Geometry::LineString(stadiamaps_route.clone()));
 
         Ok(GeometryCollection::from_iter(display))
     }
@@ -217,19 +227,6 @@ impl Regions {
     }
 }
 
-fn select_largest_polygon(multi: &MultiPolygon) -> Result<Polygon, Box<dyn std::error::Error>> {
-    let mut largest = None;
-    let mut largest_area = 0.0;
-    for p in multi.iter() {
-        let area = p.signed_area();
-        if area > largest_area {
-            largest = Some(p.clone());
-            largest_area = area;
-        }
-    }
-    largest.ok_or("No smallest polygon found".into())
-}
-
 #[instrument(skip(state))]
 pub async fn regions(state: State<AppState>, Query(bounds): Query<Bounds>) -> Json<GeoJson> {
     let regions = state.regions.clone();
@@ -238,9 +235,9 @@ pub async fn regions(state: State<AppState>, Query(bounds): Query<Bounds>) -> Js
 }
 
 #[instrument(skip(state))]
-pub async fn overlaps(state: State<AppState>, Query(bounds): Query<Bounds>) -> Json<GeoJson> {
+pub async fn route(state: State<AppState>, Query(bounds): Query<Bounds>) -> Json<GeoJson> {
     let regions = state.regions.clone();
-    let geometry_collection = regions.overlaps(bounds).await.unwrap();
+    let geometry_collection = regions.route(bounds).await.unwrap();
     Json(as_geojson(&geometry_collection))
 }
 
