@@ -67,8 +67,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
-        .route("/v1/regions", get(regions))
-        .route("/v1/route", get(route))
+        .route("/v2/regions", get(regions))
+        .route("/v2/route", get(route))
         .route("/health", get(health))
         .layer(cors)
         .layer(CompressionLayer::new())

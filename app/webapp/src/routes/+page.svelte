@@ -78,7 +78,7 @@
 
 	async function fetchRoute(bounds) {
 		const q = convertBoundsToQueryString(bounds);
-		const service_url = `${PUBLIC_API_BASE_URL}route${q}`;
+		const service_url = `${PUBLIC_API_BASE_URL}v2/route${q}`;
 		console.log('calling service ', service_url, ' ...');
 		const response = await fetch(service_url);
 		const geojson = response.json();
