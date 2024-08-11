@@ -89,15 +89,18 @@ flowchart TB
     4. intersect the route polygon with that unioned area
 - [ ] v0.6: add real routes
 
-  - [x] select a couple of arbiratry poiints within the bb as start/end
+  - [x] select a couple of arbiratry points within the bb as start/end
   - [x] get a walking route from stadia maps
   - [x] show route as a line
   - [ ] for each route returned:
-    - [ ] find minimal bounding rect of the route line
+    - [x] find bounding rect of the route line
     - [x] find candidate intersections of that rect with green areas
     - [x] union those areas together
-    - [ ] find intersections between that union and the route line
-    - [ ] show all
+    - [x] find intersections between that union and the route line
+    - [ ] show all, in different layers
+      - [ ] show route in black
+      - [ ] show overlapping segments in dark green
+      - [ ] show all green areas in light green
 
 - [ ] specialise to green.houseofmoran.io
   - [ ] switch netlify to be able to deploy multiple front-ends (green.houseofmoran.io and spectrum.houseofmoran.io)

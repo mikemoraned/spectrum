@@ -1,7 +1,6 @@
 use axum::extract::State;
 use axum::http::HeaderMap;
 use axum::{extract::Query, Json};
-use core_geo::buffer::{buffer_multi_polygon, buffer_polygon};
 use core_geo::union::union;
 use ferrostar::models::{GeographicCoordinate, UserLocation, Waypoint, WaypointKind};
 use ferrostar::routing_adapters::osrm::OsrmResponseParser;
@@ -10,8 +9,9 @@ use ferrostar::routing_adapters::{RouteRequest, RouteRequestGenerator, RouteResp
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
-use geo::{coord, Area, BoundingRect, LineString, MultiPolygon, Polygon};
-use geo_validity_check::Valid;
+use geo::{
+    coord, Area, BooleanOps, BoundingRect, LineString, MultiLineString, MultiPolygon, Polygon,
+};
 use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
@@ -84,28 +84,15 @@ impl Regions {
             .to_polygon();
 
         let possible = Regions::find_possibly_overlapping_regions(&regions, &route_bounding_rect)?;
-        let possible_example = select_largest_polygon(&possible)?;
-        let buffer_distance = 0.001;
-        if possible_example.is_valid() {
-            debug!("example is valid");
-        } else {
-            debug!(
-                "example is invalid {:?}",
-                possible_example.explain_invalidity()
-            );
-        }
-        // let buffered = buffer_multi_polygon(&possible, buffer_distance);
-        let buffered = buffer_polygon(&possible_example.clone(), buffer_distance);
+        let overlaps = possible.clip(&MultiLineString::new(vec![stadiamaps_route.clone()]), false);
 
-        let mut overlaps = vec![];
+        let mut display = vec![];
+        // display.push(Geometry::LineString(stadiamaps_route.clone()));
+        display.push(Geometry::Polygon(route_bounding_rect.clone()));
+        // display.push(Geometry::MultiPolygon(possible.clone()));
+        display.push(Geometry::MultiLineString(overlaps.clone()));
 
-        overlaps.push(Geometry::LineString(stadiamaps_route.clone()));
-        overlaps.push(Geometry::Polygon(route_bounding_rect.clone()));
-        // overlaps.push(Geometry::MultiPolygon(possible.clone()));
-        overlaps.push(Geometry::Polygon(possible_example.clone()));
-        overlaps.push(Geometry::MultiPolygon(buffered.clone()));
-
-        Ok(GeometryCollection::from_iter(overlaps))
+        Ok(GeometryCollection::from_iter(display))
     }
 
     async fn find_stadiamaps_route(
