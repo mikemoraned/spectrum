@@ -9,7 +9,9 @@ use ferrostar::routing_adapters::{RouteRequest, RouteRequestGenerator, RouteResp
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
-use geo::{coord, BooleanOps, BoundingRect, LineString, MultiLineString, MultiPolygon, Polygon};
+use geo::{
+    coord, BooleanOps, BoundingRect, Line, LineString, MultiLineString, MultiPolygon, Polygon,
+};
 use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
@@ -55,6 +57,11 @@ impl Regions {
     }
 }
 
+struct LabelledRoute {
+    route: LineString<f64>,
+    green: MultiLineString<f64>,
+}
+
 impl Regions {
     #[instrument(skip(self))]
     pub async fn regions(
@@ -94,15 +101,22 @@ impl Regions {
     }
 
     #[instrument(skip(self))]
-    pub async fn route(
-        &self,
-        bounds: Bounds,
-    ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
-        let stadiamaps_route = self.find_stadiamaps_route(&bounds).await?;
-        let mut display = vec![];
-        display.push(Geometry::LineString(stadiamaps_route.clone()));
+    pub async fn route(&self, bounds: Bounds) -> Result<LabelledRoute, Box<dyn std::error::Error>> {
+        let regions = self.load_regions(&bounds).await?;
 
-        Ok(GeometryCollection::from_iter(display))
+        let stadiamaps_route = self.find_stadiamaps_route(&bounds).await?;
+        let route_bounding_rect = stadiamaps_route
+            .bounding_rect()
+            .expect("some bounding rect")
+            .to_polygon();
+
+        let possible = Regions::find_possibly_overlapping_regions(&regions, &route_bounding_rect)?;
+        let overlaps = possible.clip(&MultiLineString::new(vec![stadiamaps_route.clone()]), false);
+
+        Ok(LabelledRoute {
+            route: stadiamaps_route,
+            green: overlaps,
+        })
     }
 
     async fn find_stadiamaps_route(
@@ -235,10 +249,28 @@ pub async fn regions(state: State<AppState>, Query(bounds): Query<Bounds>) -> Js
 }
 
 #[instrument(skip(state))]
-pub async fn route(state: State<AppState>, Query(bounds): Query<Bounds>) -> Json<GeoJson> {
+pub async fn route(
+    state: State<AppState>,
+    Query(bounds): Query<Bounds>,
+) -> Json<serde_json::Value> {
     let regions = state.regions.clone();
-    let geometry_collection = regions.route(bounds).await.unwrap();
-    Json(as_geojson(&geometry_collection))
+    let labelled_route = regions.route(bounds).await.unwrap();
+    let route_geojson = as_geojson(&GeometryCollection::from(vec![Geometry::LineString(
+        labelled_route.route,
+    )]));
+    let green_json = as_geojson(&GeometryCollection::from(vec![Geometry::MultiLineString(
+        labelled_route.green,
+    )]));
+
+    let route_json = serde_json::to_value(route_geojson).unwrap();
+    let green_json = serde_json::to_value(green_json).unwrap();
+
+    let parts: serde_json::Map<String, serde_json::Value> = serde_json::Map::from_iter(vec![
+        ("route".to_string(), route_json),
+        ("green".to_string(), green_json),
+    ]);
+    let json = serde_json::Value::Object(parts);
+    Json(json)
 }
 
 fn as_geojson(geometry_collection: &GeometryCollection<f64>) -> GeoJson {

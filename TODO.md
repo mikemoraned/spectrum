@@ -97,10 +97,9 @@ flowchart TB
     - [x] find candidate intersections of that rect with green areas
     - [x] union those areas together
     - [x] find intersections between that union and the route line
-    - [ ] show all, in different layers
+    - [x] show all, in different layers
       - [x] show route in black
-      - [ ] show overlapping segments in dark green
-      - [ ] show all green areas in light green
+      - [x] show overlapping segments in green
   - [ ] refactor / remove unneeded code / dependencies
 
 - [ ] specialise to green.houseofmoran.io

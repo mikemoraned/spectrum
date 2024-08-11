@@ -40,6 +40,10 @@
 			type: 'geojson',
 			data: null
 		});
+		map.addSource('route-green', {
+			type: 'geojson',
+			data: null
+		});
 
 		map.addLayer({
 			id: 'route',
@@ -48,6 +52,17 @@
 			layout: {},
 			paint: {
 				'line-color': 'black'
+			}
+		});
+
+		map.addLayer({
+			id: 'route-green',
+			type: 'line',
+			source: 'route-green',
+			layout: {},
+			paint: {
+				'line-color': 'green',
+				'line-width': 5
 			}
 		});
 
@@ -75,12 +90,12 @@
 		console.log('view changed');
 		const bounds = map.getBounds();
 		console.log('bounds, ', bounds);
-		console.log('triggering load of geojson');
-		fetchRoute(bounds).then((geojson) => {
-			console.log('geojson loaded');
-			const source = map.getSource('route');
-			source.setData(geojson);
-			console.log('source updated');
+		console.log('triggering load');
+		fetchRoute(bounds).then((json) => {
+			console.log('json loaded');
+			map.getSource('route').setData(json.route);
+			map.getSource('route-green').setData(json.green);
+			console.log('sources updated');
 		});
 	}
 
