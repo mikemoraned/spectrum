@@ -61,7 +61,7 @@ impl Regions {
         route: &LineString<f64>,
         bounds: &Bounds,
     ) -> Result<LabelledRoute, Box<dyn std::error::Error>> {
-        let regions = self.load_regions(&bounds).await?;
+        let regions = self.load_regions(bounds).await?;
 
         let route_bounding_rect = route
             .bounding_rect()
@@ -78,7 +78,7 @@ impl Regions {
     }
 
     fn find_possibly_overlapping_regions(
-        regions: &Vec<Geometry>,
+        regions: &[Geometry],
         route: &Polygon,
     ) -> Result<MultiPolygon, Box<dyn std::error::Error>> {
         let polygons = regions
