@@ -101,11 +101,17 @@ flowchart TB
       - [x] show overlapping segments in green
   - [x] refactor / remove unneeded code / dependencies
 
+- [ ] v0.7: focus on coverage
+  - [ ] visualise green areas as a light green layer
+  - [ ] support OSM Relations, to increase what I get from existing areas
+  - [ ] derive and save borders of areas imported as a separate flatgeobuf layer
+    - perhaps use convex hull
+  - [ ] show border of current area
+  - [ ] restrict search to only allow navigating to places that are within an area covered
 - [ ] specialise to green.houseofmoran.io
   - [ ] switch netlify to be able to deploy multiple front-ends (green.houseofmoran.io and spectrum.houseofmoran.io)
   - [ ] switch fly.io to deploy to geo.houseofmoran.io
   - [ ] move current api to be under geo.houseofmoran.io/green/v1
-- [ ] support relations, to increase coverage
 - [ ] allow route parts nearby greenery to be highlighted, and not just those that go through greenery
 
   - [ ] for each route returned:
