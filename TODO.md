@@ -101,6 +101,7 @@ flowchart TB
       - [ ] show route in black
       - [ ] show overlapping segments in dark green
       - [ ] show all green areas in light green
+  - [ ] refactor / remove unneeded code / dependencies
 
 - [ ] specialise to green.houseofmoran.io
   - [ ] switch netlify to be able to deploy multiple front-ends (green.houseofmoran.io and spectrum.houseofmoran.io)
