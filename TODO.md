@@ -96,16 +96,25 @@ flowchart TB
     - [ ] find minimal bounding rect of the route line
     - [x] find candidate intersections of that rect with green areas
     - [x] union those areas together
-    - [ ] buffer that union
-      - [ ] the `buffer_multi_polygon` from `geo_buffer` seems either slow or unstable (or at least, triggering floating-point instability in `geo`). it also is apparently currently based on an older version of geo which has known bugs; https://github.com/1011-git/geo-buffer/issues/1, https://github.com/1011-git/geo-buffer/issues/4. so, do a version of this that is based on `cavalier_contours` instead.
-    - [ ] find intersections between that buffered union and the route line
+    - [ ] find intersections between that union and the route line
     - [ ] show all
 
 - [ ] specialise to green.houseofmoran.io
   - [ ] switch netlify to be able to deploy multiple front-ends (green.houseofmoran.io and spectrum.houseofmoran.io)
   - [ ] switch fly.io to deploy to geo.houseofmoran.io
   - [ ] move current api to be under geo.houseofmoran.io/green/v1
-- [ ] support relations
+- [ ] support relations, to increase coverage
+- [ ] allow route parts nearby greenery to be highlighted, and not just those that go through greenery
+
+  - [ ] for each route returned:
+    - find minimal bounding rect of the route line
+    - find candidate intersections of that rect with green areas
+    - union those areas together
+    - [ ] buffer that union
+      - [ ] the `buffer_multi_polygon` from `geo_buffer` seems either slow or unstable (or at least, triggering floating-point instability in `geo`). it also is apparently currently based on an older version of geo which has known bugs; https://github.com/1011-git/geo-buffer/issues/1, https://github.com/1011-git/geo-buffer/issues/4. so, do a version of this that is based on `cavalier_contours` instead.
+    - [ ] find intersections between that buffered union and the route line
+    - [ ] show all
+
 - [ ] ...
 
 alternative idea for avoiding having to pre-union everything:
