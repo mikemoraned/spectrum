@@ -9,9 +9,7 @@ use ferrostar::routing_adapters::{RouteRequest, RouteRequestGenerator, RouteResp
 use flatgeobuf::geozero::ToGeo;
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
 use geo::geometry::{Geometry, GeometryCollection};
-use geo::{
-    coord, BooleanOps, BoundingRect, Line, LineString, MultiLineString, MultiPolygon, Polygon,
-};
+use geo::{coord, BooleanOps, BoundingRect, LineString, MultiLineString, MultiPolygon, Polygon};
 use geojson::feature::Id;
 use geojson::FeatureCollection;
 use geojson::GeoJson;
@@ -73,31 +71,6 @@ impl Regions {
         let unioned: Vec<Geometry<f64>> = union(geoms)?;
 
         Ok(GeometryCollection::from_iter(unioned))
-    }
-
-    #[instrument(skip(self))]
-    pub async fn overlaps(
-        &self,
-        bounds: Bounds,
-    ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
-        let regions = self.load_regions(&bounds).await?;
-
-        let stadiamaps_route = self.find_stadiamaps_route(&bounds).await?;
-        let route_bounding_rect = stadiamaps_route
-            .bounding_rect()
-            .expect("some bounding rect")
-            .to_polygon();
-
-        let possible = Regions::find_possibly_overlapping_regions(&regions, &route_bounding_rect)?;
-        let overlaps = possible.clip(&MultiLineString::new(vec![stadiamaps_route.clone()]), false);
-
-        let mut display = vec![];
-        // display.push(Geometry::LineString(stadiamaps_route.clone()));
-        display.push(Geometry::Polygon(route_bounding_rect.clone()));
-        // display.push(Geometry::MultiPolygon(possible.clone()));
-        display.push(Geometry::MultiLineString(overlaps.clone()));
-
-        Ok(GeometryCollection::from_iter(display))
     }
 
     #[instrument(skip(self))]
