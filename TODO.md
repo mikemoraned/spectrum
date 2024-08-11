@@ -108,6 +108,7 @@ flowchart TB
     - perhaps use convex hull
   - [ ] show border of current area
   - [ ] restrict search to only allow navigating to places that are within an area covered
+    - from looking at https://docs.mapbox.com/mapbox-search-js/api/web/search/#mapboxsearchbox#options I can't post-filter within the widget. However, it looks like, based on https://docs.mapbox.com/mapbox-search-js/api/core/search/#searchboxcore#suggest and related, I can use suggest then retrieve to get the geojson points and post-filter them. However, that probably means I need to write my own widget.
 - [ ] specialise to green.houseofmoran.io
   - [ ] switch netlify to be able to deploy multiple front-ends (green.houseofmoran.io and spectrum.houseofmoran.io)
   - [ ] switch fly.io to deploy to geo.houseofmoran.io
