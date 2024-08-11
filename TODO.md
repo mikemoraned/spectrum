@@ -87,7 +87,7 @@ flowchart TB
     2. take polygon describing route and find intersection candidates using the rtree
     3. take only those candidates and union all them together
     4. intersect the route polygon with that unioned area
-- [ ] v0.6: add real routes
+- [x] v0.6: add real routes
 
   - [x] select a couple of arbiratry points within the bb as start/end
   - [x] get a walking route from stadia maps
@@ -99,7 +99,7 @@ flowchart TB
     - [x] show all, in different layers
       - [x] show route in black
       - [x] show overlapping segments in green
-  - [ ] refactor / remove unneeded code / dependencies
+  - [x] refactor / remove unneeded code / dependencies
 
 - [ ] specialise to green.houseofmoran.io
   - [ ] switch netlify to be able to deploy multiple front-ends (green.houseofmoran.io and spectrum.houseofmoran.io)
