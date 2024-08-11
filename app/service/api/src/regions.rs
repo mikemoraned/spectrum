@@ -175,6 +175,7 @@ impl Regions {
         let routes = OsrmResponseParser::new(6).parse_response(content.to_vec())?;
 
         debug!("Parsed routes: {:?}", routes);
+        debug!("Converting {:?} routes", routes.len());
 
         let route = routes.first().unwrap();
         let route_line = LineString::new(

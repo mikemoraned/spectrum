@@ -91,8 +91,7 @@ flowchart TB
 
   - [x] select a couple of arbiratry points within the bb as start/end
   - [x] get a walking route from stadia maps
-  - [x] show route as a line
-  - [ ] for each route returned:
+  - [x] show route
     - [x] find bounding rect of the route line
     - [x] find candidate intersections of that rect with green areas
     - [x] union those areas together
