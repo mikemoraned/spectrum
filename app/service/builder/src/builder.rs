@@ -5,7 +5,7 @@ use std::{
 };
 
 use geo::geometry::{Coord, Geometry, GeometryCollection, LineString, Polygon};
-use osmpbf::{Element, ElementReader, IndexedReader, Relation, Way};
+use osmpbf::{Element, IndexedReader, Way};
 use tracing::{debug, instrument};
 
 use crate::filter::GreenTags;
@@ -20,17 +20,15 @@ struct RefId(i64);
 struct PendingStage {
     refs_for_ways: HashMap<WayId, Vec<RefId>>,
     ways_for_refs: HashMap<RefId, Vec<WayId>>,
-    relation_count: usize,
 }
 
 impl Display for PendingStage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "PendingStage, saw #ways: {}, #refs: {}, #relations: {}",
+            "PendingStage, saw #ways: {}, #refs: {}",
             self.refs_for_ways.len(),
-            self.ways_for_refs.len(),
-            self.relation_count
+            self.ways_for_refs.len()
         )
     }
 }
@@ -46,19 +44,6 @@ impl PendingStage {
             ways.push(way_id);
         });
         self.refs_for_ways.insert(way_id, refs_for_way);
-    }
-
-    fn append_relation(&mut self, relation: &Relation) {
-        if relation.members().any(|m| {
-            if m.member_type == osmpbf::RelMemberType::Way {
-                if let Ok("outer") = m.role() {
-                    return true;
-                }
-            }
-            return false;
-        }) {
-            self.relation_count += 1;
-        }
     }
 
     fn to_assignment(&self) -> AssignStage {
@@ -116,7 +101,6 @@ impl Display for AssignStage {
 pub fn extract_regions(
     osmpbf_path: &Path,
 ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
-    let element_reader = ElementReader::from_path(osmpbf_path)?;
     let mut indexed_reader = IndexedReader::from_path(osmpbf_path)?;
 
     let mut pending_stage = PendingStage::default();
@@ -132,15 +116,6 @@ pub fn extract_regions(
     indexed_reader.read_ways_and_deps(way_filter, |element| {
         if let Element::Way(way) = element {
             pending_stage.append_way(way);
-        }
-    })?;
-    debug!("via relations");
-    element_reader.for_each(|element| {
-        if let Element::Relation(relation) = element {
-            let tag_set: HashSet<(&str, &str)> = relation.tags().collect();
-            if tag_set.contains(&("type", "multipolygon")) && green_tags.filter(tag_set) {
-                pending_stage.append_relation(&relation);
-            }
         }
     })?;
 
