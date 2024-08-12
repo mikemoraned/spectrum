@@ -128,7 +128,10 @@ pub fn extract_regions(
     debug!("via relations");
     element_reader.for_each(|element| {
         if let Element::Relation(relation) = element {
-            pending_stage.append_relation(&relation);
+            let tag_set: HashSet<(&str, &str)> = relation.tags().collect();
+            if green_tags.filter(tag_set) {
+                pending_stage.append_relation(&relation);
+            }
         }
     })?;
 
