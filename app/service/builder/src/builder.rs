@@ -4,10 +4,10 @@ use std::{
 };
 
 use geo::geometry::{Coord, Geometry, GeometryCollection, LineString, Polygon};
-use osmpbf::{Element, IndexedReader};
+use osmpbf::{Element, IndexedReader, Way};
 use tracing::{debug, instrument};
 
-use crate::filter::{green_tag_filter, GreenTags};
+use crate::filter::GreenTags;
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 struct WayId(i64);
@@ -23,6 +23,12 @@ pub fn extract_regions(
 
     let mut pending_refs_for_ways: HashMap<WayId, Vec<RefId>> = HashMap::new();
     let mut pending_ways_for_refs: HashMap<RefId, Vec<WayId>> = HashMap::new();
+
+    let green_tags = GreenTags::default();
+    let way_filter = |way: &Way| {
+        let tag_set: HashSet<(&str, &str)> = way.tags().collect();
+        green_tags.filter(tag_set)
+    };
 
     debug!("Finding pending ways");
     reader
@@ -88,11 +94,6 @@ pub fn extract_regions(
     debug!("Created {} polygons", geometry.len());
 
     Ok(GeometryCollection::from_iter(geometry))
-}
-
-fn way_filter(way: &osmpbf::Way<'_>) -> bool {
-    let tag_set: HashSet<(&str, &str)> = way.tags().collect();
-    GreenTags::default().filter(tag_set)
 }
 
 fn insert_coord_into_way(
