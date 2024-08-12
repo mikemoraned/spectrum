@@ -5,7 +5,7 @@ use std::{
 };
 
 use geo::geometry::{Coord, Geometry, GeometryCollection, LineString, Polygon};
-use osmpbf::{Element, ElementReader, Way};
+use osmpbf::{Element, ElementReader, Relation, Way};
 use tracing::{debug, instrument};
 
 use crate::filter::GreenTags;
@@ -19,11 +19,31 @@ struct RefId(i64);
 #[derive(Default)]
 struct FilterStage {
     ways: HashSet<WayId>,
+    direct_ways_count: usize,
+    ways_via_relation_count: usize,
 }
 
 impl FilterStage {
     fn append_way(&mut self, way: &Way) {
         self.ways.insert(WayId(way.id()));
+        self.direct_ways_count += 1;
+    }
+
+    fn append_relation(&mut self, relation: &Relation) {
+        let tag_set: HashSet<(&str, &str)> = relation.tags().collect();
+        if tag_set.contains(&("type", "multipolygon")) {
+            if let Some(outer_way) = relation.members().find(|m| {
+                if m.member_type == osmpbf::RelMemberType::Way {
+                    if let Ok("outer") = m.role() {
+                        return true;
+                    }
+                }
+                return false;
+            }) {
+                self.ways.insert(WayId(outer_way.member_id));
+                self.ways_via_relation_count += 1;
+            }
+        }
     }
 
     fn to_pending_stage(&self) -> PendingStage {
@@ -33,7 +53,13 @@ impl FilterStage {
 
 impl Display for FilterStage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "FilterStage, allowed #ways: {}", self.ways.len())
+        write!(
+            f,
+            "FilterStage, #direct: {}, #via_relation: {}, #total: {}",
+            self.direct_ways_count,
+            self.ways_via_relation_count,
+            self.ways.len()
+        )
     }
 }
 
@@ -148,6 +174,11 @@ pub fn extract_regions(
         if let Element::Way(way) = element {
             if way_filter(&way) {
                 filter_stage.append_way(&way);
+            }
+        } else if let Element::Relation(relation) = element {
+            let tag_set: HashSet<(&str, &str)> = relation.tags().collect();
+            if green_tags.filter(tag_set) {
+                filter_stage.append_relation(&relation);
             }
         }
     })?;
