@@ -40,7 +40,7 @@ impl FilterStage {
                         return true;
                     }
                 }
-                return false;
+                false
             }) {
                 self.ways.insert(WayId(outer_way.member_id));
                 self.ways_via_relation_count += 1;
@@ -48,7 +48,7 @@ impl FilterStage {
         }
     }
 
-    fn to_pending_stage(self) -> PendingStage {
+    fn into_pending_stage(self) -> PendingStage {
         PendingStage::new(self.ways)
     }
 }
@@ -98,7 +98,7 @@ impl PendingStage {
         }
     }
 
-    fn to_assignment(self) -> AssignStage {
+    fn into_assign_stage(self) -> AssignStage {
         AssignStage {
             refs_for_ways: self.refs_for_ways,
             coords_for_refs: HashMap::default(),
@@ -116,7 +116,7 @@ impl AssignStage {
         self.coords_for_refs.insert(ref_id, *coord);
     }
 
-    fn to_geometry(self) -> Vec<Geometry<f64>> {
+    fn into_geometry(self) -> Vec<Geometry<f64>> {
         let mut geometry = vec![];
         let bar = progress_bar(self.refs_for_ways.len() as u64);
         for ref_ids in self.refs_for_ways.into_iter() {
@@ -170,7 +170,7 @@ pub fn extract_regions(
     debug!("Filtered: {}", filter_stage);
 
     debug!("Collecting");
-    let mut pending_stage = filter_stage.to_pending_stage();
+    let mut pending_stage = filter_stage.into_pending_stage();
     let pending_stage_bar = progress_bar(total_elements);
     let element_reader = ElementReader::from_path(osmpbf_path)?;
     element_reader.for_each(|element| {
@@ -183,7 +183,7 @@ pub fn extract_regions(
     debug!("Collected: {}", pending_stage);
 
     debug!("Assigning Coords");
-    let mut assign_stage = pending_stage.to_assignment();
+    let mut assign_stage = pending_stage.into_assign_stage();
     debug!("Created stage");
     let assign_stage_bar = progress_bar(total_elements);
     let element_reader = ElementReader::from_path(osmpbf_path)?;
@@ -206,7 +206,7 @@ pub fn extract_regions(
     debug!("Found positions for ways: {}", assign_stage);
 
     debug!("Creating polygons");
-    let geometry = assign_stage.to_geometry();
+    let geometry = assign_stage.into_geometry();
     debug!("Created {} polygons", geometry.len());
 
     Ok(GeometryCollection::from_iter(geometry))
