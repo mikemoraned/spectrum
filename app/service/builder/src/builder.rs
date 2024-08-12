@@ -16,21 +16,26 @@ struct WayId(i64);
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 struct RefId(i64);
 
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+struct RelationId(i64);
+
 #[derive(Default)]
 struct PendingStage {
     refs_for_ways: HashMap<WayId, Vec<RefId>>,
     ways_for_refs: HashMap<RefId, Vec<WayId>>,
-    relation_count: usize,
+    refs_for_relations: HashMap<RelationId, Vec<RefId>>,
+    relations_for_refs: HashMap<RefId, Vec<RelationId>>,
 }
 
 impl Display for PendingStage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "PendingStage, saw #ways: {}, #refs: {}, #relations: {}",
+            "PendingStage, saw #ways: {}, #refs: {}, #relations: {}, #refs: {}",
             self.refs_for_ways.len(),
             self.ways_for_refs.len(),
-            self.relation_count
+            self.refs_for_relations.len(),
+            self.relations_for_refs.len(),
         )
     }
 }
@@ -49,7 +54,36 @@ impl PendingStage {
     }
 
     fn append_relation(&mut self, relation: &Relation) {
-        self.relation_count += 1;
+        let relation_id = RelationId(relation.id());
+        let mut refs_for_relation: Vec<RefId> = vec![];
+        let mut node_count = 0;
+        let mut relation_count = 0;
+        let mut way_count = 0;
+        relation.members().for_each(|member| {
+            match member.member_type {
+                osmpbf::RelMemberType::Node => {
+                    node_count += 1;
+                }
+                osmpbf::RelMemberType::Way => {
+                    way_count += 1;
+                }
+                osmpbf::RelMemberType::Relation => {
+                    relation_count += 1;
+                }
+            }
+            // if member.member_type == osmpbf::RelMemberType::Node {
+            //     let ref_id = RefId(member.member_id);
+            //     refs_for_relation.push(ref_id);
+            //     let relations = self.relations_for_refs.entry(ref_id).or_default();
+            //     relations.push(relation_id);
+            // }
+        });
+        debug!(
+            "Relation {} has {} nodes, {} ways, {} relations",
+            relation_id.0, node_count, way_count, relation_count
+        );
+        self.refs_for_relations
+            .insert(relation_id, refs_for_relation);
     }
 
     fn to_assignment(&self) -> AssignStage {
