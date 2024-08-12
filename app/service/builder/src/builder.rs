@@ -47,8 +47,8 @@ impl FilterStage {
         }
     }
 
-    fn to_pending_stage(&self) -> PendingStage {
-        PendingStage::new(self.ways.clone())
+    fn to_pending_stage(self) -> PendingStage {
+        PendingStage::new(self.ways)
     }
 }
 
@@ -106,7 +106,7 @@ impl PendingStage {
         }
     }
 
-    fn to_assignment(&self) -> AssignStage {
+    fn to_assignment(self) -> AssignStage {
         let mut coords_for_way: HashMap<WayId, Vec<Coord>> = HashMap::new();
         for (way_id, pending_refs) in self.refs_for_ways.iter() {
             let mut coords: Vec<Coord> = Vec::new();
@@ -115,8 +115,8 @@ impl PendingStage {
         }
         AssignStage {
             coords_for_way,
-            refs_for_ways: self.refs_for_ways.clone(),
-            ways_for_refs: self.ways_for_refs.clone(),
+            refs_for_ways: self.refs_for_ways,
+            ways_for_refs: self.ways_for_refs,
         }
     }
 }
@@ -142,10 +142,10 @@ impl AssignStage {
         }
     }
 
-    fn to_geometry(&self) -> Vec<Geometry<f64>> {
+    fn to_geometry(self) -> Vec<Geometry<f64>> {
         let mut geometry = vec![];
-        for (_, coords) in self.coords_for_way.iter() {
-            let polygon = Polygon::new(LineString::from(coords.clone()), vec![]);
+        for (_, coords) in self.coords_for_way.into_iter() {
+            let polygon = Polygon::new(LineString::from(coords), vec![]);
             geometry.push(Geometry::Polygon(polygon));
         }
         geometry
