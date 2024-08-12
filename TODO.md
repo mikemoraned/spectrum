@@ -105,6 +105,11 @@ flowchart TB
   - [x] visualise green areas as a light green layer
   - [x] minimally support OSM Relations, to increase what I get from existing areas
     - [x] map the outer Way of a Relation to a Polygon
+  - [ ] optimise builder (it is taking a while consuming Germany)
+    - ideas:
+      - [ ] minimise copies
+      - [ ] use IndexedReader again
+      - [ ] use FxHashmap
   - [ ] expand to all of:
     - [x] Scotland
     - [ ] Germany
