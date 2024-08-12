@@ -129,7 +129,7 @@ pub fn extract_regions(
     element_reader.for_each(|element| {
         if let Element::Relation(relation) = element {
             let tag_set: HashSet<(&str, &str)> = relation.tags().collect();
-            if green_tags.filter(tag_set) {
+            if tag_set.contains(&("type", "multipolygon")) && green_tags.filter(tag_set) {
                 pending_stage.append_relation(&relation);
             }
         }
