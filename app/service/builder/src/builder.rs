@@ -5,6 +5,7 @@ use std::{
 };
 
 use geo::geometry::{Coord, Geometry, GeometryCollection, LineString, Polygon};
+use indicatif::ProgressBar;
 use osmpbf::{Element, ElementReader, Relation, Way};
 use tracing::{debug, instrument};
 
@@ -170,6 +171,7 @@ pub fn extract_regions(
         green_tags.filter(tag_set)
     };
     let element_reader = ElementReader::from_path(osmpbf_path)?;
+    let mut total_elements = 0u64;
     element_reader.for_each(|element| {
         if let Element::Way(way) = element {
             if way_filter(&way) {
@@ -181,36 +183,42 @@ pub fn extract_regions(
                 filter_stage.append_relation(&relation);
             }
         }
+        total_elements += 1;
     })?;
     debug!("Filtered: {}", filter_stage);
 
-    let mut pending_stage = filter_stage.to_pending_stage();
-
     debug!("Collecting");
+    let mut pending_stage = filter_stage.to_pending_stage();
+    let pending_stage_bar = ProgressBar::new(total_elements);
     let element_reader = ElementReader::from_path(osmpbf_path)?;
     element_reader.for_each(|element| {
         if let Element::Way(way) = element {
             pending_stage.append_way(&way);
         }
+        pending_stage_bar.inc(1);
     })?;
-
+    pending_stage_bar.finish_and_clear();
     debug!("Collected: {}", pending_stage);
 
     debug!("Assigning Coords");
     let mut assign_stage = pending_stage.to_assignment();
-
+    let assign_stage_bar = ProgressBar::new(total_elements);
     let element_reader = ElementReader::from_path(osmpbf_path)?;
-    element_reader.for_each(|element| match element {
-        Element::DenseNode(dense_node) => {
-            let coord = Coord::from((dense_node.lon(), dense_node.lat()));
-            assign_stage.insert_coord_into_way(RefId(dense_node.id()), &coord);
-        }
-        Element::Node(node) => {
-            let coord = Coord::from((node.lon(), node.lat()));
-            assign_stage.insert_coord_into_way(RefId(node.id()), &coord);
-        }
-        _ => (),
+    element_reader.for_each(|element| {
+        match element {
+            Element::DenseNode(dense_node) => {
+                let coord = Coord::from((dense_node.lon(), dense_node.lat()));
+                assign_stage.insert_coord_into_way(RefId(dense_node.id()), &coord);
+            }
+            Element::Node(node) => {
+                let coord = Coord::from((node.lon(), node.lat()));
+                assign_stage.insert_coord_into_way(RefId(node.id()), &coord);
+            }
+            _ => (),
+        };
+        assign_stage_bar.inc(1);
     })?;
+    assign_stage_bar.finish_and_clear();
 
     debug!("Found positions for ways: {}", assign_stage);
 
