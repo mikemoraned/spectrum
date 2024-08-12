@@ -103,10 +103,14 @@ flowchart TB
 
 - [ ] v0.7: focus on coverage
   - [x] visualise green areas as a light green layer
-  - [ ] support OSM Relations, to increase what I get from existing areas
+  - [x] minimally support OSM Relations, to increase what I get from existing areas
     - [x] map the outer Way of a Relation to a Polygon
-    - [ ] add commandline param to only add Ways directly or via Relations (just to more easily see where coverage comes from)
-    - [ ] support mapping Relations with holes
+  - [ ] expand to all of Scotland, Germany, Japan and South Korea
+- [ ] vN: more deep support of relations
+  - [ ] add commandline param to only add Ways directly or via Relations (just to more easily see where coverage comes from)
+  - [ ] support mapping Relations like Princes Street Gardens (https://www.openstreetmap.org/relation/963806#map=17/55.94966/-3.20065) which seem to contain multiple outer Ways; I think because these Ways are part of multiple Relations e.g.https://www.openstreetmap.org/way/290611951#map=18/55.94956/-3.20217
+  - [ ] support mapping Relations with holes
+- [ ] vN: focus on only allowing navigation to supported areas
   - [ ] derive and save borders of areas imported as a separate flatgeobuf layer
     - perhaps use convex hull
   - [ ] show border of current area
