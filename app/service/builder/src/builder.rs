@@ -67,6 +67,7 @@ impl Display for FilterStage {
 
 struct PendingStage {
     allowed_ways: HashSet<WayId>,
+    allowed_refs: HashSet<RefId>,
     refs_for_ways: Vec<Vec<RefId>>,
 }
 
@@ -74,6 +75,7 @@ impl PendingStage {
     fn new(allowed_ways: HashSet<WayId>) -> Self {
         PendingStage {
             allowed_ways,
+            allowed_refs: HashSet::default(),
             refs_for_ways: Vec::default(),
         }
     }
@@ -93,6 +95,7 @@ impl PendingStage {
             way.refs().for_each(|r| {
                 let ref_id = RefId(r);
                 refs_for_way.push(ref_id);
+                self.allowed_refs.insert(ref_id);
             });
             self.refs_for_ways.push(refs_for_way);
         }
@@ -100,6 +103,7 @@ impl PendingStage {
 
     fn into_assign_stage(self) -> AssignStage {
         AssignStage {
+            allowed_refs: self.allowed_refs,
             refs_for_ways: self.refs_for_ways,
             coords_for_refs: HashMap::default(),
         }
@@ -107,13 +111,16 @@ impl PendingStage {
 }
 
 struct AssignStage {
+    allowed_refs: HashSet<RefId>,
     refs_for_ways: Vec<Vec<RefId>>,
     coords_for_refs: HashMap<RefId, Coord>,
 }
 
 impl AssignStage {
     fn add_coord_for_ref_id(&mut self, ref_id: RefId, coord: &Coord) {
-        self.coords_for_refs.insert(ref_id, *coord);
+        if self.allowed_refs.contains(&ref_id) {
+            self.coords_for_refs.insert(ref_id, *coord);
+        }
     }
 
     fn into_geometry(self) -> Vec<Geometry<f64>> {
