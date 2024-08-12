@@ -7,7 +7,7 @@ use geo::geometry::{Coord, Geometry, GeometryCollection, LineString, Polygon};
 use osmpbf::{Element, IndexedReader};
 use tracing::{debug, instrument};
 
-use crate::filter::green_tag_filter;
+use crate::filter::{green_tag_filter, GreenTags};
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 struct WayId(i64);
@@ -92,7 +92,7 @@ pub fn extract_regions(
 
 fn way_filter(way: &osmpbf::Way<'_>) -> bool {
     let tag_set: HashSet<(&str, &str)> = way.tags().collect();
-    green_tag_filter(tag_set)
+    GreenTags::default().filter(tag_set)
 }
 
 fn insert_coord_into_way(
