@@ -104,6 +104,9 @@ flowchart TB
 - [ ] v0.7: focus on coverage
   - [x] visualise green areas as a light green layer
   - [ ] support OSM Relations, to increase what I get from existing areas
+    - [x] map the outer Way of a Relation to a Polygon
+    - [ ] add commandline param to only add Ways directly or via Relations (just to more easily see where coverage comes from)
+    - [ ] support mapping Relations with holes
   - [ ] derive and save borders of areas imported as a separate flatgeobuf layer
     - perhaps use convex hull
   - [ ] show border of current area
