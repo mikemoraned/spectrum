@@ -23,7 +23,8 @@
 		map = new Map({
 			container: mapContainer,
 			accessToken: PUBLIC_MAPBOX_TOKEN,
-			style: `mapbox://styles/mapbox/outdoors-v11`,
+			// style: `mapbox://styles/mapbox/outdoors-v11`,
+			style: `mapbox://styles/mapbox/light-v11`,
 			...starting_position
 		});
 
