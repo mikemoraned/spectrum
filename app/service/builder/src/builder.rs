@@ -5,7 +5,7 @@ use std::{
 };
 
 use geo::geometry::{Coord, Geometry, GeometryCollection, LineString, Polygon};
-use osmpbf::{Element, IndexedReader, Way};
+use osmpbf::{Element, ElementReader, Way};
 use tracing::{debug, instrument};
 
 use crate::filter::GreenTags;
@@ -17,9 +17,40 @@ struct WayId(i64);
 struct RefId(i64);
 
 #[derive(Default)]
+struct FilterStage {
+    ways: HashSet<WayId>,
+}
+
+impl FilterStage {
+    fn append_way(&mut self, way: &Way) {
+        self.ways.insert(WayId(way.id()));
+    }
+
+    fn to_pending_stage(&self) -> PendingStage {
+        PendingStage::new(self.ways.clone())
+    }
+}
+
+impl Display for FilterStage {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "FilterStage, allowed #ways: {}", self.ways.len())
+    }
+}
+
 struct PendingStage {
+    allowed_ways: HashSet<WayId>,
     refs_for_ways: HashMap<WayId, Vec<RefId>>,
     ways_for_refs: HashMap<RefId, Vec<WayId>>,
+}
+
+impl PendingStage {
+    fn new(allowed_ways: HashSet<WayId>) -> Self {
+        PendingStage {
+            allowed_ways,
+            refs_for_ways: HashMap::new(),
+            ways_for_refs: HashMap::new(),
+        }
+    }
 }
 
 impl Display for PendingStage {
@@ -36,14 +67,16 @@ impl Display for PendingStage {
 impl PendingStage {
     fn append_way(&mut self, way: &Way) {
         let way_id = WayId(way.id());
-        let mut refs_for_way: Vec<RefId> = vec![];
-        way.refs().for_each(|r| {
-            let ref_id = RefId(r);
-            refs_for_way.push(ref_id);
-            let ways = self.ways_for_refs.entry(ref_id).or_default();
-            ways.push(way_id);
-        });
-        self.refs_for_ways.insert(way_id, refs_for_way);
+        if self.allowed_ways.contains(&way_id) {
+            let mut refs_for_way: Vec<RefId> = vec![];
+            way.refs().for_each(|r| {
+                let ref_id = RefId(r);
+                refs_for_way.push(ref_id);
+                let ways = self.ways_for_refs.entry(ref_id).or_default();
+                ways.push(way_id);
+            });
+            self.refs_for_ways.insert(way_id, refs_for_way);
+        }
     }
 
     fn to_assignment(&self) -> AssignStage {
@@ -69,13 +102,14 @@ struct AssignStage {
 
 impl AssignStage {
     fn insert_coord_into_way(&mut self, ref_id: RefId, coord: &Coord) {
-        let pending_ways = self.ways_for_refs.get(&ref_id).unwrap();
-        for way_id in pending_ways {
-            let refs = self.refs_for_ways.get(way_id).unwrap();
-            let coords = self.coords_for_way.get_mut(way_id).unwrap();
-            for i in 0..refs.len() {
-                if refs[i] == ref_id {
-                    coords[i] = *coord;
+        if let Some(pending_ways) = self.ways_for_refs.get(&ref_id) {
+            for way_id in pending_ways {
+                let refs = self.refs_for_ways.get(way_id).unwrap();
+                let coords = self.coords_for_way.get_mut(way_id).unwrap();
+                for i in 0..refs.len() {
+                    if refs[i] == ref_id {
+                        coords[i] = *coord;
+                    }
                 }
             }
         }
@@ -101,30 +135,41 @@ impl Display for AssignStage {
 pub fn extract_regions(
     osmpbf_path: &Path,
 ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
-    let mut indexed_reader = IndexedReader::from_path(osmpbf_path)?;
-
-    let mut pending_stage = PendingStage::default();
+    debug!("Filtering Ways");
+    let mut filter_stage = FilterStage::default();
 
     let green_tags = GreenTags::default();
     let way_filter = |way: &Way| {
         let tag_set: HashSet<(&str, &str)> = way.tags().collect();
         green_tags.filter(tag_set)
     };
+    let element_reader = ElementReader::from_path(osmpbf_path)?;
+    element_reader.for_each(|element| {
+        if let Element::Way(way) = element {
+            if way_filter(&way) {
+                filter_stage.append_way(&way);
+            }
+        }
+    })?;
+    debug!("Filtered: {}", filter_stage);
+
+    let mut pending_stage = filter_stage.to_pending_stage();
 
     debug!("Collecting");
-    debug!("via ways");
-    indexed_reader.read_ways_and_deps(way_filter, |element| {
+    let element_reader = ElementReader::from_path(osmpbf_path)?;
+    element_reader.for_each(|element| {
         if let Element::Way(way) = element {
-            pending_stage.append_way(way);
+            pending_stage.append_way(&way);
         }
     })?;
 
-    debug!("Found pending ways: {}", pending_stage);
+    debug!("Collected: {}", pending_stage);
 
-    debug!("Finding coords for ways");
+    debug!("Assigning Coords");
     let mut assign_stage = pending_stage.to_assignment();
 
-    indexed_reader.read_ways_and_deps(way_filter, |element| match element {
+    let element_reader = ElementReader::from_path(osmpbf_path)?;
+    element_reader.for_each(|element| match element {
         Element::DenseNode(dense_node) => {
             let coord = Coord::from((dense_node.lon(), dense_node.lat()));
             assign_stage.insert_coord_into_way(RefId(dense_node.id()), &coord);
