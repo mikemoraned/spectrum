@@ -5,7 +5,7 @@ use std::{
 };
 
 use geo::geometry::{Coord, Geometry, GeometryCollection, LineString, Polygon};
-use osmpbf::{Element, IndexedReader, Way};
+use osmpbf::{Element, ElementReader, IndexedReader, Relation, Way};
 use tracing::{debug, instrument};
 
 use crate::filter::GreenTags;
@@ -20,21 +20,23 @@ struct RefId(i64);
 struct PendingStage {
     refs_for_ways: HashMap<WayId, Vec<RefId>>,
     ways_for_refs: HashMap<RefId, Vec<WayId>>,
+    relation_count: usize,
 }
 
 impl Display for PendingStage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "PendingStage {{ ways: {}, refs: {} }}",
+            "PendingStage, saw #ways: {}, #refs: {}, #relations: {}",
             self.refs_for_ways.len(),
-            self.ways_for_refs.len()
+            self.ways_for_refs.len(),
+            self.relation_count
         )
     }
 }
 
 impl PendingStage {
-    fn append(&mut self, way: &Way) {
+    fn append_way(&mut self, way: &Way) {
         let way_id = WayId(way.id());
         let mut refs_for_way: Vec<RefId> = vec![];
         way.refs().for_each(|r| {
@@ -44,6 +46,10 @@ impl PendingStage {
             ways.push(way_id);
         });
         self.refs_for_ways.insert(way_id, refs_for_way);
+    }
+
+    fn append_relation(&mut self, relation: &Relation) {
+        self.relation_count += 1;
     }
 
     fn to_assignment(&self) -> AssignStage {
@@ -101,7 +107,8 @@ impl Display for AssignStage {
 pub fn extract_regions(
     osmpbf_path: &Path,
 ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
-    let mut reader = IndexedReader::from_path(osmpbf_path).expect("Failed to open file");
+    let element_reader = ElementReader::from_path(osmpbf_path)?;
+    let mut indexed_reader = IndexedReader::from_path(osmpbf_path)?;
 
     let mut pending_stage = PendingStage::default();
 
@@ -111,10 +118,17 @@ pub fn extract_regions(
         green_tags.filter(tag_set)
     };
 
-    debug!("Collecting ways");
-    reader.read_ways_and_deps(way_filter, |element| {
+    debug!("Collecting");
+    debug!("via ways");
+    indexed_reader.read_ways_and_deps(way_filter, |element| {
         if let Element::Way(way) = element {
-            pending_stage.append(way);
+            pending_stage.append_way(way);
+        }
+    })?;
+    debug!("via relations");
+    element_reader.for_each(|element| {
+        if let Element::Relation(relation) = element {
+            pending_stage.append_relation(&relation);
         }
     })?;
 
@@ -123,7 +137,7 @@ pub fn extract_regions(
     debug!("Finding coords for ways");
     let mut assign_stage = pending_stage.to_assignment();
 
-    reader.read_ways_and_deps(way_filter, |element| match element {
+    indexed_reader.read_ways_and_deps(way_filter, |element| match element {
         Element::DenseNode(dense_node) => {
             let coord = Coord::from((dense_node.lon(), dense_node.lat()));
             assign_stage.insert_coord_into_way(RefId(dense_node.id()), &coord);
