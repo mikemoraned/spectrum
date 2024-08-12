@@ -67,28 +67,21 @@ impl Display for FilterStage {
 
 struct PendingStage {
     allowed_ways: HashSet<WayId>,
-    refs_for_ways: HashMap<WayId, Vec<RefId>>,
-    ways_for_refs: HashMap<RefId, Vec<WayId>>,
+    refs_for_ways: Vec<Vec<RefId>>,
 }
 
 impl PendingStage {
     fn new(allowed_ways: HashSet<WayId>) -> Self {
         PendingStage {
             allowed_ways,
-            refs_for_ways: HashMap::default(),
-            ways_for_refs: HashMap::default(),
+            refs_for_ways: Vec::default(),
         }
     }
 }
 
 impl Display for PendingStage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "PendingStage, saw #ways: {}, #refs: {}",
-            self.refs_for_ways.len(),
-            self.ways_for_refs.len()
-        )
+        write!(f, "PendingStage, saw #ways: {}", self.refs_for_ways.len())
     }
 }
 
@@ -100,62 +93,50 @@ impl PendingStage {
             way.refs().for_each(|r| {
                 let ref_id = RefId(r);
                 refs_for_way.push(ref_id);
-                let ways = self.ways_for_refs.entry(ref_id).or_default();
-                ways.push(way_id);
             });
-            self.refs_for_ways.insert(way_id, refs_for_way);
+            self.refs_for_ways.push(refs_for_way);
         }
     }
 
     fn to_assignment(self) -> AssignStage {
-        let mut coords_for_way: HashMap<WayId, Vec<Coord>> = HashMap::default();
-        for (way_id, pending_refs) in self.refs_for_ways.iter() {
-            let mut coords: Vec<Coord> = Vec::new();
-            coords.resize(pending_refs.len(), Coord::default());
-            coords_for_way.insert(*way_id, coords);
-        }
         AssignStage {
-            coords_for_way,
             refs_for_ways: self.refs_for_ways,
-            ways_for_refs: self.ways_for_refs,
+            coords_for_refs: HashMap::default(),
         }
     }
 }
 
 struct AssignStage {
-    coords_for_way: HashMap<WayId, Vec<Coord>>,
-    refs_for_ways: HashMap<WayId, Vec<RefId>>,
-    ways_for_refs: HashMap<RefId, Vec<WayId>>,
+    refs_for_ways: Vec<Vec<RefId>>,
+    coords_for_refs: HashMap<RefId, Coord>,
 }
 
 impl AssignStage {
-    fn insert_coord_into_way(&mut self, ref_id: RefId, coord: &Coord) {
-        if let Some(pending_ways) = self.ways_for_refs.get(&ref_id) {
-            for way_id in pending_ways {
-                let refs = self.refs_for_ways.get(way_id).unwrap();
-                let coords = self.coords_for_way.get_mut(way_id).unwrap();
-                for i in 0..refs.len() {
-                    if refs[i] == ref_id {
-                        coords[i] = *coord;
-                    }
-                }
-            }
-        }
+    fn add_coord_for_ref_id(&mut self, ref_id: RefId, coord: &Coord) {
+        self.coords_for_refs.insert(ref_id, *coord);
     }
 
     fn to_geometry(self) -> Vec<Geometry<f64>> {
         let mut geometry = vec![];
-        for (_, coords) in self.coords_for_way.into_iter() {
+        let bar = progress_bar(self.refs_for_ways.len() as u64);
+        for ref_ids in self.refs_for_ways.into_iter() {
+            let coords = ref_ids
+                .into_iter()
+                .map(|ref_id| self.coords_for_refs.get(&ref_id).unwrap())
+                .cloned()
+                .collect::<Vec<Coord>>();
             let polygon = Polygon::new(LineString::from(coords), vec![]);
             geometry.push(Geometry::Polygon(polygon));
+            bar.inc(1);
         }
+        bar.finish();
         geometry
     }
 }
 
 impl Display for AssignStage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "AssignStage {{ ways: {} }}", self.coords_for_way.len())
+        write!(f, "AssignStage {{ ways: {} }}", self.refs_for_ways.len())
     }
 }
 
@@ -198,7 +179,7 @@ pub fn extract_regions(
         }
         pending_stage_bar.inc(1);
     })?;
-    pending_stage_bar.finish_and_clear();
+    pending_stage_bar.finish();
     debug!("Collected: {}", pending_stage);
 
     debug!("Assigning Coords");
@@ -210,17 +191,17 @@ pub fn extract_regions(
         match element {
             Element::DenseNode(dense_node) => {
                 let coord = Coord::from((dense_node.lon(), dense_node.lat()));
-                assign_stage.insert_coord_into_way(RefId(dense_node.id()), &coord);
+                assign_stage.add_coord_for_ref_id(RefId(dense_node.id()), &coord);
             }
             Element::Node(node) => {
                 let coord = Coord::from((node.lon(), node.lat()));
-                assign_stage.insert_coord_into_way(RefId(node.id()), &coord);
+                assign_stage.add_coord_for_ref_id(RefId(node.id()), &coord);
             }
             _ => (),
         };
         assign_stage_bar.inc(1);
     })?;
-    assign_stage_bar.finish_and_clear();
+    assign_stage_bar.finish();
 
     debug!("Found positions for ways: {}", assign_stage);
 
