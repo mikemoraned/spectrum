@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use rustc_hash::FxHashSet as HashSet;
 
 pub struct GreenTags<'a> {
     generic_tag_set: HashSet<(&'a str, &'a str)>,

@@ -1,5 +1,6 @@
+use rustc_hash::FxHashMap as HashMap;
+use rustc_hash::FxHashSet as HashSet;
 use std::{
-    collections::{HashMap, HashSet},
     fmt::{Display, Formatter},
     path::Path,
 };
@@ -74,8 +75,8 @@ impl PendingStage {
     fn new(allowed_ways: HashSet<WayId>) -> Self {
         PendingStage {
             allowed_ways,
-            refs_for_ways: HashMap::new(),
-            ways_for_refs: HashMap::new(),
+            refs_for_ways: HashMap::default(),
+            ways_for_refs: HashMap::default(),
         }
     }
 }
@@ -107,7 +108,7 @@ impl PendingStage {
     }
 
     fn to_assignment(self) -> AssignStage {
-        let mut coords_for_way: HashMap<WayId, Vec<Coord>> = HashMap::new();
+        let mut coords_for_way: HashMap<WayId, Vec<Coord>> = HashMap::default();
         for (way_id, pending_refs) in self.refs_for_ways.iter() {
             let mut coords: Vec<Coord> = Vec::new();
             coords.resize(pending_refs.len(), Coord::default());

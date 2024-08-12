@@ -15,4 +15,6 @@ geojson = { workspace = true }
 geozero = { workspace = true }
 flatgeobuf = { workspace = true }
 
+rustc-hash = { workspace = true }
+
 core_geo = { path = "../core_geo" }
