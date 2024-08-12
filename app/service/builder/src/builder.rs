@@ -6,11 +6,11 @@ use std::{
 };
 
 use geo::geometry::{Coord, Geometry, GeometryCollection, LineString, Polygon};
-use indicatif::ProgressBar;
 use osmpbf::{Element, ElementReader, Relation, Way};
 use tracing::{debug, instrument};
 
 use crate::filter::GreenTags;
+use crate::progress::progress_bar;
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 struct WayId(i64);
@@ -190,7 +190,7 @@ pub fn extract_regions(
 
     debug!("Collecting");
     let mut pending_stage = filter_stage.to_pending_stage();
-    let pending_stage_bar = ProgressBar::new(total_elements);
+    let pending_stage_bar = progress_bar(total_elements);
     let element_reader = ElementReader::from_path(osmpbf_path)?;
     element_reader.for_each(|element| {
         if let Element::Way(way) = element {
@@ -204,7 +204,7 @@ pub fn extract_regions(
     debug!("Assigning Coords");
     let mut assign_stage = pending_stage.to_assignment();
     debug!("Created stage");
-    let assign_stage_bar = ProgressBar::new(total_elements);
+    let assign_stage_bar = progress_bar(total_elements);
     let element_reader = ElementReader::from_path(osmpbf_path)?;
     element_reader.for_each(|element| {
         match element {
