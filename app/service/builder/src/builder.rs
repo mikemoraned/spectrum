@@ -49,7 +49,16 @@ impl PendingStage {
     }
 
     fn append_relation(&mut self, relation: &Relation) {
-        self.relation_count += 1;
+        if relation.members().any(|m| {
+            if m.member_type == osmpbf::RelMemberType::Way {
+                if let Ok("outer") = m.role() {
+                    return true;
+                }
+            }
+            return false;
+        }) {
+            self.relation_count += 1;
+        }
     }
 
     fn to_assignment(&self) -> AssignStage {
