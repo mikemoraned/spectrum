@@ -202,6 +202,7 @@ pub fn extract_regions(
 
     debug!("Assigning Coords");
     let mut assign_stage = pending_stage.to_assignment();
+    debug!("Created stage");
     let assign_stage_bar = ProgressBar::new(total_elements);
     let element_reader = ElementReader::from_path(osmpbf_path)?;
     element_reader.for_each(|element| {
