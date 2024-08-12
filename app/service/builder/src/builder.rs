@@ -89,6 +89,11 @@ pub fn extract_regions(
 }
 
 fn way_filter(way: &osmpbf::Way<'_>) -> bool {
+    let tag_set: HashSet<(&str, &str)> = way.tags().collect();
+    tag_filter(tag_set)
+}
+
+fn tag_filter(tag_set: HashSet<(&str, &str)>) -> bool {
     let generic: Vec<(&str, &str)> = vec![
         ("leisure", "common"),
         ("leisure", "dog_park"),
@@ -122,7 +127,6 @@ fn way_filter(way: &osmpbf::Way<'_>) -> bool {
         ("landuse", "village_green"),
     ];
     let generic_tag_set: HashSet<(&str, &str)> = generic.into_iter().collect();
-    let tag_set: HashSet<(&str, &str)> = way.tags().collect();
     if tag_set.contains(&("leisure", "garden")) {
         tag_set.contains(&("access", "yes")) || tag_set.contains(&("garden:type", "community"))
     } else {
@@ -148,107 +152,3 @@ fn insert_coord_into_way(
         }
     }
 }
-
-// pub fn build(path: String) -> Result<GeoJson, ()> {
-//     let mut reader = IndexedReader::from_path(path).unwrap();
-
-//     let mut pending_refs_for_ways: HashMap<i64, Vec<i64>> = HashMap::new();
-//     let mut pending_ways_for_refs: HashMap<i64, Vec<i64>> = HashMap::new();
-
-//     debug!("Finding pending ways");
-//     reader
-//         .read_ways_and_deps(way_filter, |element| match element {
-//             Element::Way(way) => {
-//                 let mut pending_refs_for_way = vec![];
-//                 way.refs().for_each(|r| {
-//                     pending_refs_for_way.push(r);
-//                     let pending_ways = pending_ways_for_refs.entry(r).or_default();
-//                     pending_ways.push(way.id());
-//                 });
-//                 pending_refs_for_ways.insert(way.id(), pending_refs_for_way);
-//             }
-//             _ => (),
-//         })
-//         .unwrap();
-
-//     debug!("Found {} pending ways", pending_refs_for_ways.len());
-
-//     debug!("Finding positions for ways");
-//     let mut positions_for_way: HashMap<i64, Vec<Position>> = HashMap::new();
-//     for (way_id, pending_refs) in pending_refs_for_ways.iter() {
-//         let mut positions: Vec<Position> = Vec::new();
-//         positions.resize(pending_refs.len(), Vec::new());
-//         positions_for_way.insert(*way_id, positions);
-//     }
-
-//     fn insert_position_into_way(
-//         node_id: i64,
-//         position: &Position,
-//         pending_refs_for_ways: &HashMap<i64, Vec<i64>>,
-//         pending_ways_for_refs: &HashMap<i64, Vec<i64>>,
-//         positions_for_way: &mut HashMap<i64, Vec<Vec<f64>>>,
-//     ) {
-//         let pending_ways = pending_ways_for_refs.get(&node_id).unwrap();
-//         for way_id in pending_ways {
-//             let pending_refs = pending_refs_for_ways.get(way_id).unwrap();
-//             let positions = positions_for_way.get_mut(way_id).unwrap();
-//             for i in 0..pending_refs.len() {
-//                 if pending_refs[i] == node_id {
-//                     positions[i] = position.clone();
-//                 }
-//             }
-//         }
-//     }
-
-//     reader
-//         .read_ways_and_deps(way_filter, |element| match element {
-//             Element::DenseNode(dense_node) => {
-//                 let position = vec![dense_node.lon(), dense_node.lat()];
-//                 insert_position_into_way(
-//                     dense_node.id(),
-//                     &position,
-//                     &pending_refs_for_ways,
-//                     &pending_ways_for_refs,
-//                     &mut positions_for_way,
-//                 );
-//             }
-//             Element::Node(node) => {
-//                 let position = vec![node.lon(), node.lat()];
-//                 insert_position_into_way(
-//                     node.id(),
-//                     &position,
-//                     &pending_refs_for_ways,
-//                     &pending_ways_for_refs,
-//                     &mut positions_for_way,
-//                 );
-//             }
-//             _ => (),
-//         })
-//         .unwrap();
-
-//     debug!("Found positions for ways");
-
-//     // debug!("Creating features");
-//     // let mut features = vec![];
-//     // for (_way_id, positions) in positions_for_way.iter() {
-//     //     let geometry = Geometry::new(Value::Polygon(vec![positions.clone()]));
-//     //     features.push(Feature {
-//     //         bbox: None,
-//     //         geometry: Some(geometry),
-//     //         id: None,
-//     //         properties: None,
-//     //         foreign_members: None,
-//     //     });
-//     // }
-//     // debug!("Created {} features", features.len());
-
-//     // debug!("Creating feature collection");
-//     // let geojson = GeoJson::FeatureCollection(FeatureCollection {
-//     //     bbox: None,
-//     //     features,
-//     //     foreign_members: None,
-//     // });
-//     // debug!("Created feature collection");
-
-//     // Ok(geojson)
-// }
