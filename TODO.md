@@ -106,11 +106,11 @@ flowchart TB
   - [x] minimally support OSM Relations, to increase what I get from existing areas
     - [x] map the outer Way of a Relation to a Polygon
   - [x] optimise builder (it is taking a while consuming Germany)
-  - [ ] expand to all of:
+  - [x] expand to all of:
     - [x] Scotland
     - [x] Germany
     - [x] Japan
-    - [ ] South Korea
+    - [x] South Korea
   - [ ] files are too big to be in a Docker container (3G+) so make flatgeobufiles remotely hostable
     - [ ] upload fgb file to a CDN which supports Range requests
     - [ ] extend api to use a remote URL
