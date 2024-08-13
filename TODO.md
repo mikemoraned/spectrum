@@ -105,16 +105,15 @@ flowchart TB
   - [x] visualise green areas as a light green layer
   - [x] minimally support OSM Relations, to increase what I get from existing areas
     - [x] map the outer Way of a Relation to a Polygon
-  - [ ] optimise builder (it is taking a while consuming Germany)
-    - ideas:
-      - [ ] minimise copies
-      - [ ] use IndexedReader again
-      - [ ] use FxHashmap
+  - [x] optimise builder (it is taking a while consuming Germany)
   - [ ] expand to all of:
     - [x] Scotland
-    - [ ] Germany
-    - [ ] Japan
+    - [x] Germany
+    - [x] Japan
     - [ ] South Korea
+  - [ ] files are too big to be in a Docker container (3G+) so make flatgeobufiles remotely hostable
+    - [ ] upload fgb file to a CDN which supports Range requests
+    - [ ] extend api to use a remote URL
 - [ ] vN: more deep support of relations
   - [ ] add commandline param to only add Ways directly or via Relations (just to more easily see where coverage comes from)
   - [ ] support mapping Relations like Princes Street Gardens (https://www.openstreetmap.org/relation/963806#map=17/55.94966/-3.20065) which seem to contain multiple outer Ways; I think because these Ways are part of multiple Relations e.g.https://www.openstreetmap.org/way/290611951#map=18/55.94956/-3.20217
