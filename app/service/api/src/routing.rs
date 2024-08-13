@@ -1,6 +1,7 @@
 use std::time::SystemTime;
 
 use axum::http::HeaderMap;
+use core_geo::Bounds;
 use ferrostar::{
     models::{GeographicCoordinate, UserLocation, Waypoint, WaypointKind},
     routing_adapters::{
@@ -11,8 +12,6 @@ use ferrostar::{
 use geo::{coord, LineString};
 use tracing::debug;
 use url::Url;
-
-use crate::regions::Bounds;
 
 pub struct StadiaMapsRouting {
     route_url: Url,
