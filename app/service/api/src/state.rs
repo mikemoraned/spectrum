@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use crate::{flatgeobuf::FgbFileSource, regions::Regions, routing::StadiaMapsRouting};
+use crate::{flatgeobuf::FgbSource, regions::Regions, routing::StadiaMapsRouting};
 
 #[derive(Clone)]
 pub struct AppState {
-    pub flatgeobuf: Arc<FgbFileSource>,
+    pub flatgeobuf: Arc<dyn FgbSource + Send + Sync>,
     pub regions: Arc<Regions>,
     pub routing: Arc<StadiaMapsRouting>,
 }

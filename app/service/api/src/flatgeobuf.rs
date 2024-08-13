@@ -9,6 +9,10 @@ use flatgeobuf::{geozero::ToGeo, FallibleStreamingIterator, FgbReader};
 use geo::Geometry;
 use tracing::{debug, instrument};
 
+pub trait FgbSource {
+    fn load(&self, bounds: &Bounds) -> Result<Vec<Geometry<f64>>, Box<dyn std::error::Error>>;
+}
+
 pub struct FgbFileSource {
     path: PathBuf,
 }
@@ -19,9 +23,11 @@ impl FgbFileSource {
             path: path.to_path_buf(),
         }
     }
+}
 
+impl FgbSource for FgbFileSource {
     #[instrument(skip(self))]
-    pub fn load(&self, bounds: &Bounds) -> Result<Vec<Geometry<f64>>, Box<dyn std::error::Error>> {
+    fn load(&self, bounds: &Bounds) -> Result<Vec<Geometry<f64>>, Box<dyn std::error::Error>> {
         let filein = BufReader::new(File::open(self.path.clone())?);
         let reader = FgbReader::open(filein)?;
         debug!("Opened FlatGeobuf file: {:?}", self.path);
