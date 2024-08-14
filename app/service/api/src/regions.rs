@@ -9,7 +9,6 @@ use geojson::FeatureCollection;
 use geojson::GeoJson;
 use rstar::RTree;
 use std::iter::FromIterator;
-use std::sync::Arc;
 use tracing::instrument;
 
 use crate::flatgeobuf::FgbSource;
@@ -27,10 +26,10 @@ impl Regions {
     #[instrument(skip(self, fgb, bounds))]
     pub async fn regions(
         &self,
-        fgb: &Arc<dyn FgbSource + Send + Sync>,
+        fgb: &FgbSource,
         bounds: Bounds,
     ) -> Result<GeometryCollection<f64>, Box<dyn std::error::Error>> {
-        let geoms = fgb.load(&bounds)?;
+        let geoms = fgb.load(&bounds).await?;
 
         let unioned: Vec<Geometry<f64>> = union(geoms)?;
 
@@ -40,11 +39,11 @@ impl Regions {
     #[instrument(skip(self, fgb, route, bounds))]
     pub async fn label_route(
         &self,
-        fgb: &Arc<dyn FgbSource + Send + Sync>,
+        fgb: &FgbSource,
         route: &LineString<f64>,
         bounds: &Bounds,
     ) -> Result<LabelledRoute, Box<dyn std::error::Error>> {
-        let regions = fgb.load(&bounds)?;
+        let regions = fgb.load(&bounds).await?;
 
         let route_bounding_rect = route
             .bounding_rect()
