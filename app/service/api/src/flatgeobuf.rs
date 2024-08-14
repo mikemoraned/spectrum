@@ -8,7 +8,7 @@ use core_geo::Bounds;
 use flatgeobuf::{geozero::ToGeo, FallibleStreamingIterator, FgbReader, HttpFgbReader};
 use geo::Geometry;
 use std::fmt::Display;
-use tracing::{debug, instrument};
+use tracing::{instrument, trace};
 use url::Url;
 
 pub enum FgbSource {
@@ -55,17 +55,25 @@ impl FgbFileSource {
     #[instrument(skip(self))]
     fn load(&self, bounds: &Bounds) -> Result<Vec<Geometry<f64>>, Box<dyn std::error::Error>> {
         let filein = BufReader::new(File::open(self.path.clone())?);
+        trace!("Opening reader for FlatGeobuf file: {:?}", self.path);
         let reader = FgbReader::open(filein)?;
-        debug!("Opened FlatGeobuf file: {:?}", self.path);
+        trace!("Opened reader");
 
+        trace!("Selecting bbox, {:?}", bounds);
         let mut features =
             reader.select_bbox(bounds.sw_lon, bounds.sw_lat, bounds.ne_lon, bounds.ne_lat)?;
+        trace!("Selected bbox");
 
+        trace!("Iterating over features");
         let mut geoms: Vec<Geometry<f64>> = vec![];
         while let Some(feature) = features.next()? {
             let geom: Geometry<f64> = feature.to_geo()?;
             geoms.push(geom);
         }
+        trace!(
+            "Finished iterating over features, found {} geoms",
+            geoms.len()
+        );
 
         Ok(geoms)
     }
@@ -81,16 +89,26 @@ impl FgbUrlSource {
         &self,
         bounds: &Bounds,
     ) -> Result<Vec<Geometry<f64>>, Box<dyn std::error::Error>> {
-        let mut features = HttpFgbReader::open(&self.url.to_string())
-            .await?
+        trace!("Opening reader for FlatGeobuf URL: {:?}", self.url);
+        let reader = HttpFgbReader::open(&self.url.to_string()).await?;
+        trace!("Opened reader");
+
+        trace!("Selecting bbox, {:?}", bounds);
+        let mut features = reader
             .select_bbox(bounds.sw_lon, bounds.sw_lat, bounds.ne_lon, bounds.ne_lat)
             .await?;
+        trace!("Selected bbox");
 
+        trace!("Iterating over features");
         let mut geoms: Vec<Geometry<f64>> = vec![];
         while let Some(feature) = features.next().await? {
             let geom: Geometry<f64> = feature.to_geo()?;
             geoms.push(geom);
         }
+        trace!(
+            "Finished iterating over features, found {} geoms",
+            geoms.len()
+        );
 
         Ok(geoms)
     }

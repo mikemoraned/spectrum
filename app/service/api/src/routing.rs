@@ -10,7 +10,7 @@ use ferrostar::{
     },
 };
 use geo::{coord, LineString};
-use tracing::debug;
+use tracing::trace;
 use url::Url;
 
 pub struct StadiaMapsRouting {
@@ -69,8 +69,6 @@ impl StadiaMapsRouting {
         let RouteRequest::HttpPost { url, body, headers } =
             generator.generate_request(user_location, waypoints)?;
 
-        debug!("Route body: {:?}", String::from_utf8(body.clone()));
-
         let client = reqwest::Client::new();
         let response = client
             .post(url)
@@ -79,13 +77,10 @@ impl StadiaMapsRouting {
             .send()
             .await?;
 
-        debug!("Route response: {:?}", response);
-
         let content = response.bytes().await?;
         let routes = OsrmResponseParser::new(6).parse_response(content.to_vec())?;
 
-        debug!("Parsed routes: {:?}", routes);
-        debug!("Converting {:?} routes", routes.len());
+        trace!("Converting {:?} routes", routes.len());
 
         let route = routes.first().unwrap();
         let route_line = LineString::new(
