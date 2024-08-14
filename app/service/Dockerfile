@@ -12,7 +12,6 @@ RUN cargo build --release
 
 FROM fedora:34 AS runner
 COPY --from=builder /prod/target/release/api /bin
-COPY --from=builder /prod/api/data /data
 RUN ls -R .
 
-CMD ./bin/api --opentelemetry --fgb-file ./data/relations1.fgb
+CMD ./bin/api --opentelemetry --fgb-url https://spikes-remote-fgb.b-cdn.net/relations2.fgb
