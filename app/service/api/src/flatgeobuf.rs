@@ -101,9 +101,14 @@ impl FgbUrlSource {
 
         trace!("Iterating over features");
         let mut geoms: Vec<Geometry<f64>> = vec![];
+        let mut report_at = 1;
         while let Some(feature) = features.next().await? {
             let geom: Geometry<f64> = feature.to_geo()?;
             geoms.push(geom);
+            if geoms.len() == report_at {
+                trace!("Loaded {} geoms", geoms.len());
+                report_at *= 2;
+            }
         }
         trace!(
             "Finished iterating over features, found {} geoms",
