@@ -112,8 +112,13 @@ flowchart TB
     - [x] Japan
     - [x] South Korea
   - [ ] files are too big to be in a Docker container (3G+) so make flatgeobufiles remotely hostable
-    - [ ] upload fgb file to a CDN which supports Range requests
-    - [ ] extend api to use a remote URL
+    - [x] upload fgb file to a CDN which supports Range requests
+    - [x] extend api to use a remote URL
+    - [x] fix performance problems: a relatively small file (https://spikes-remote-fgb.b-cdn.net/relations2.fgb, 149M) takes 3 minutes to fetch all geoms from for Edinburgh; this is surprising. Ideas for improving this:
+      - [ ] add tracing to used libraries (flatgeobuf, http_range_client) to see where in the time in this 3 mins is being spent
+      - [ ] narrow geoms needed for route display: geoms needed for intersection with the route can come from the restricted bbox of the route and not Edinburgh as a whole
+      - [ ] experiment: upload biggest file (relations5.fgb, 3.0G) and see if the latency scales with the total size (if so, that would indicate fgb is perhaps trying downloading the whole thing when it shouldn't)
+      - [ ] experiment: switch to a different CDN provider than bunny.net that also supports range requests
 - [ ] vN: more deep support of relations
   - [ ] add commandline param to only add Ways directly or via Relations (just to more easily see where coverage comes from)
   - [ ] support mapping Relations like Princes Street Gardens (https://www.openstreetmap.org/relation/963806#map=17/55.94966/-3.20065) which seem to contain multiple outer Ways; I think because these Ways are part of multiple Relations e.g.https://www.openstreetmap.org/way/290611951#map=18/55.94956/-3.20217
