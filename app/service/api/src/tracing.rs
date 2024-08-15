@@ -7,6 +7,7 @@ use opentelemetry_sdk::propagation::TraceContextPropagator;
 use opentelemetry_sdk::{runtime, trace as sdktrace, Resource};
 use opentelemetry_semantic_conventions as semcov;
 use tracing::{debug, info, span};
+use tracing_log::LogTracer;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::{fmt, EnvFilter, Registry};
 
@@ -65,6 +66,8 @@ pub fn init_opentelemetry_from_environment(
         .with(telemetry_layer)
         .with(filter_layer)
         .with(fmt_layer);
+
+    LogTracer::init()?;
 
     tracing::subscriber::set_global_default(subscriber)?;
     let root = span!(tracing::Level::TRACE, "init_from_environment");

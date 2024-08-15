@@ -8,6 +8,7 @@ axum = "0.7.5"
 tower = "0.4"
 tower-http = { version = "0.5.2", features = ["cors", "compression-gzip"] }
 tracing = "0.1"
+tracing-log = "0.2.0"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4.5.13", features = ["derive"] }
 dotenvy = "0.15.7"

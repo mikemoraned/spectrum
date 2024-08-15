@@ -15,6 +15,7 @@ opentelemetry-http = { version = "0.11" }
 opentelemetry-semantic-conventions = { version = "0.14" }
 tracing-opentelemetry = "0.23"
 tracing = { workspace = true }
+tracing-log = { workspace = true }
 
 geo = { workspace = true }
 flatgeobuf = { workspace = true }
