@@ -127,7 +127,9 @@ flowchart TB
         - aborted this as it looks like range requests are going through fine (from looking at Proxyman)
       - [x] time to load is now about 1s (in total) for `/v2/route` but still minutes for `/v2/regions` so, disable loading/displaying the latter and just rely on mapbox base map for context of green areas
 - [ ] spike: using `pmtiles` as a data source:
-  - [ ] create minimal cli which loads from a url and dumps some info
+  - [x] create minimal cli which loads from a url and dumps some info
+    - dumping TileJSON metadata
+  - [ ] dump any vector geo features I can (e.g. polygons)
   - [ ] try reading a public data source of pmtiles, which covers Edinburgh, and show as regions
     - perhaps https://data.source.coop/protomaps/openstreetmap/tiles/v3.pmtiles
 - [ ] vN: more deep support of relations
