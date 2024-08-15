@@ -1,5 +1,6 @@
 use clap::Parser;
 use pmtiles::{async_reader::AsyncPmTilesReader, cache::HashMapCache, HttpBackend};
+use serde_json::Value;
 use url::Url;
 
 #[derive(Parser, Debug)]
@@ -20,7 +21,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let reader = AsyncPmTilesReader::try_from_cached_source(backend, cache).await?;
 
     let metadata = reader.get_metadata().await?;
-    println!("{:?}", metadata);
+    let metadata_json: Value = serde_json::from_str(&metadata)?;
+    println!("{}", serde_json::to_string_pretty(&metadata_json)?);
 
     Ok(())
 }
