@@ -24,16 +24,15 @@ struct Args {
     fgb: Option<PathBuf>,
 }
 
-fn setup_tracing_and_logging(fmt_filter: EnvFilter) {
+fn setup_tracing_and_logging(fmt_filter: EnvFilter) -> Result<(), Box<dyn std::error::Error>> {
     let fmt_layer = fmt::layer().with_filter(fmt_filter);
-    tracing_subscriber::registry()
-        .with(fmt_layer)
-        .try_init()
-        .unwrap();
+    tracing_subscriber::registry().with(fmt_layer).try_init()?;
+
+    Ok(())
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    setup_tracing_and_logging(EnvFilter::from_default_env());
+    setup_tracing_and_logging(EnvFilter::from_default_env())?;
 
     let args = Args::parse();
     debug!("{:?}", args);
