@@ -101,7 +101,7 @@ flowchart TB
       - [x] show overlapping segments in green
   - [x] refactor / remove unneeded code / dependencies
 
-- [ ] v0.7: focus on coverage
+- [x] v0.7: focus on coverage
   - [x] visualise green areas as a light green layer
   - [x] minimally support OSM Relations, to increase what I get from existing areas
     - [x] map the outer Way of a Relation to a Polygon
@@ -126,6 +126,8 @@ flowchart TB
       - [-] experiment: switch to a different CDN provider than bunny.net that also supports range requests
         - aborted this as it looks like range requests are going through fine (from looking at Proxyman)
       - [x] time to load is now about 1s (in total) for `/v2/route` but still minutes for `/v2/regions` so, disable loading/displaying the latter and just rely on mapbox base map for context of green areas
+- [ ] spike: using `pmtiles` as a data source:
+  - [ ] try reading a public data source of pmtiles, which covers Edinburgh
 - [ ] vN: more deep support of relations
   - [ ] add commandline param to only add Ways directly or via Relations (just to more easily see where coverage comes from)
   - [ ] support mapping Relations like Princes Street Gardens (https://www.openstreetmap.org/relation/963806#map=17/55.94966/-3.20065) which seem to contain multiple outer Ways; I think because these Ways are part of multiple Relations e.g.https://www.openstreetmap.org/way/290611951#map=18/55.94956/-3.20217
