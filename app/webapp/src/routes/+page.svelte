@@ -23,8 +23,8 @@
 		map = new Map({
 			container: mapContainer,
 			accessToken: PUBLIC_MAPBOX_TOKEN,
-			// style: `mapbox://styles/mapbox/outdoors-v11`,
-			style: `mapbox://styles/mapbox/light-v11`,
+			style: `mapbox://styles/mapbox/outdoors-v11`,
+			// style: `mapbox://styles/mapbox/light-v11`,
 			...starting_position
 		});
 
@@ -37,10 +37,10 @@
 	});
 
 	async function initialiseSource() {
-		map.addSource('green', {
-			type: 'geojson',
-			data: null
-		});
+		// map.addSource('green', {
+		// 	type: 'geojson',
+		// 	data: null
+		// });
 		map.addSource('route', {
 			type: 'geojson',
 			data: null
@@ -50,16 +50,16 @@
 			data: null
 		});
 
-		map.addLayer({
-			id: 'green',
-			type: 'fill',
-			source: 'green',
-			layout: {},
-			paint: {
-				'fill-color': 'lightgreen',
-				'fill-opacity': 0.4
-			}
-		});
+		// map.addLayer({
+		// 	id: 'green',
+		// 	type: 'fill',
+		// 	source: 'green',
+		// 	layout: {},
+		// 	paint: {
+		// 		'fill-color': 'lightgreen',
+		// 		'fill-opacity': 0.4
+		// 	}
+		// });
 
 		map.addLayer({
 			id: 'route',
@@ -117,11 +117,11 @@
 		const bounds = map.getBounds();
 		console.log('bounds, ', bounds);
 		console.log('triggering load');
-		fetchGreen(bounds).then((json) => {
-			console.log('green json loaded');
-			map.getSource('green').setData(json);
-			console.log('source updated');
-		});
+		// fetchGreen(bounds).then((json) => {
+		// 	console.log('green json loaded');
+		// 	map.getSource('green').setData(json);
+		// 	console.log('source updated');
+		// });
 		fetchRoute(bounds).then((json) => {
 			console.log('route json loaded');
 			map.getSource('route').setData(json.route);

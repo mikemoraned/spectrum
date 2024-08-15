@@ -121,8 +121,10 @@ flowchart TB
       - [x] install a proxy (e.g. Proxyman) and look at what requests it is making
         - done: unexpectedly, for Edinburgh, it _is_ making range requests, but a lot of them. It's making about 6000+ separate GET's. Is it a coincidence that the number of polygons is about 6000? Is it making a separate request for each polygon?
       - [x] narrow geoms needed for route display: geoms needed for intersection with the route can come from the restricted bbox of the route and not Edinburgh as a whole
+        - this now leads to only about six requests being made, to fetch 290 polygons, which is way better
       - [-] experiment: switch to a different CDN provider than bunny.net that also supports range requests
         - aborted this as it looks like range requests are going through fine (from looking at Proxyman)
+      - [x] time to load is now about 1s (in total) for `/v2/route` but still minutes for `/v2/regions` so, disable loading/displaying the latter and just rely on mapbox base map for context of green areas
 - [ ] vN: more deep support of relations
   - [ ] add commandline param to only add Ways directly or via Relations (just to more easily see where coverage comes from)
   - [ ] support mapping Relations like Princes Street Gardens (https://www.openstreetmap.org/relation/963806#map=17/55.94966/-3.20065) which seem to contain multiple outer Ways; I think because these Ways are part of multiple Relations e.g.https://www.openstreetmap.org/way/290611951#map=18/55.94956/-3.20217
