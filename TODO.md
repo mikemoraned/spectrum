@@ -115,7 +115,8 @@ flowchart TB
     - [x] upload fgb file to a CDN which supports Range requests
     - [x] extend api to use a remote URL
     - [x] fix performance problems: a relatively small file (https://spikes-remote-fgb.b-cdn.net/relations2.fgb, 149M) takes 3 minutes to fetch all geoms from for Edinburgh; this is surprising. Ideas for improving this:
-      - [ ] add tracing to used libraries (flatgeobuf, http_range_client) to see where in the time in this 3 mins is being spent
+      - [x] add tracing to used libraries (flatgeobuf, http_range_client) to see where in the time in this 3 mins is being spent
+        - used `tracing-log` to propagate logs used by third-party crates into traces, which can then be enabled via `RUST_LOG=api=debug,api::flatgeobuf=trace,flatgeobuf=trace`
       - [ ] experiment: upload biggest file (relations5.fgb, 3.0G) and see if the latency scales with the total size (if so, that would indicate fgb is perhaps trying downloading the whole thing when it shouldn't)
       - [x] install a proxy (e.g. Proxyman) and look at what requests it is making
         - done: unexpectedly, for Edinburgh, it _is_ making range requests, but a lot of them. It's making about 6000+ separate GET's. Is it a coincidence that the number of polygons is about 6000? Is it making a separate request for each polygon?
