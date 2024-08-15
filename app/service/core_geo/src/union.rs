@@ -5,7 +5,7 @@ use rstar::{
     primitives::{CachedEnvelope, GeomWithData},
     RTree,
 };
-use tracing::{debug, trace, warn};
+use tracing::{debug, instrument, trace, warn};
 
 #[derive(Eq, PartialEq, Hash, Copy, Clone, Debug)]
 struct PolygonId(usize);
@@ -18,6 +18,7 @@ struct Partitioned {
 #[derive(Clone, Copy, PartialEq, Debug)]
 struct GroupId(usize);
 
+#[instrument(skip(polygons))]
 fn intersection_candidates(polygons: &[Polygon]) -> Vec<(PolygonId, PolygonId)> {
     let entries = polygons
         .iter()
@@ -41,6 +42,7 @@ fn intersection_candidates(polygons: &[Polygon]) -> Vec<(PolygonId, PolygonId)> 
     candidates
 }
 
+#[instrument(skip(polygons))]
 fn partition(polygons: &[Polygon]) -> Partitioned {
     let polygon_ids = polygons
         .iter()
@@ -98,6 +100,7 @@ fn partition(polygons: &[Polygon]) -> Partitioned {
     Partitioned { disjunctive_groups }
 }
 
+#[instrument(skip(geometry))]
 pub fn union(
     geometry: Vec<Geometry<f64>>,
 ) -> Result<Vec<Geometry<f64>>, Box<dyn std::error::Error>> {

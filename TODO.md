@@ -101,11 +101,49 @@ flowchart TB
       - [x] show overlapping segments in green
   - [x] refactor / remove unneeded code / dependencies
 
+- [ ] v0.7: focus on coverage
+  - [x] visualise green areas as a light green layer
+  - [x] minimally support OSM Relations, to increase what I get from existing areas
+    - [x] map the outer Way of a Relation to a Polygon
+  - [x] optimise builder (it is taking a while consuming Germany)
+  - [x] expand to all of:
+    - [x] Scotland
+    - [x] Germany
+    - [x] Japan
+    - [x] South Korea
+  - [x] files are too big to be in a Docker container (3G+) so make flatgeobufiles remotely hostable
+    - [x] upload fgb file to a CDN which supports Range requests
+    - [x] extend api to use a remote URL
+    - [x] fix performance problems: a relatively small file (https://spikes-remote-fgb.b-cdn.net/relations2.fgb, 149M) takes 3 minutes to fetch all geoms from for Edinburgh; this is surprising. Ideas for improving this:
+      - [x] add tracing to used libraries (flatgeobuf, http_range_client) to see where in the time in this 3 mins is being spent
+        - used `tracing-log` to propagate logs used by third-party crates into traces, which can then be enabled via `RUST_LOG=api=debug,api::flatgeobuf=trace,flatgeobuf=trace`
+      - [x] experiment: upload biggest file (relations5.fgb, 3.0G) and see if the latency scales with the total size (if so, that would indicate fgb is perhaps trying downloading the whole thing when it shouldn't)
+        - with biggest file, the route-only bbox call is at least the same latency as for the smaller file. So, technically, I haven't tested with the full Edinburgh area. However this at least shows it is not downloading the whole file.
+      - [x] install a proxy (e.g. Proxyman) and look at what requests it is making
+        - done: unexpectedly, for Edinburgh, it _is_ making range requests, but a lot of them. It's making about 6000+ separate GET's. Is it a coincidence that the number of polygons is about 6000? Is it making a separate request for each polygon?
+      - [x] narrow geoms needed for route display: geoms needed for intersection with the route can come from the restricted bbox of the route and not Edinburgh as a whole
+        - this now leads to only about six requests being made, to fetch 290 polygons, which is way better
+      - [-] experiment: switch to a different CDN provider than bunny.net that also supports range requests
+        - aborted this as it looks like range requests are going through fine (from looking at Proxyman)
+      - [x] time to load is now about 1s (in total) for `/v2/route` but still minutes for `/v2/regions` so, disable loading/displaying the latter and just rely on mapbox base map for context of green areas
+- [ ] vN: more deep support of relations
+  - [ ] add commandline param to only add Ways directly or via Relations (just to more easily see where coverage comes from)
+  - [ ] support mapping Relations like Princes Street Gardens (https://www.openstreetmap.org/relation/963806#map=17/55.94966/-3.20065) which seem to contain multiple outer Ways; I think because these Ways are part of multiple Relations e.g.https://www.openstreetmap.org/way/290611951#map=18/55.94956/-3.20217
+  - [ ] support mapping Relations with holes
+- [ ] vN: focus on only allowing navigation to supported areas
+  - [ ] derive and save borders of areas imported as a separate flatgeobuf layer
+    - perhaps use convex hull
+  - [ ] show border of current area
+  - [ ] restrict search to only allow navigating to places that are within an area covered
+    - from looking at https://docs.mapbox.com/mapbox-search-js/api/web/search/#mapboxsearchbox#options I can't post-filter within the widget. However, it looks like, based on https://docs.mapbox.com/mapbox-search-js/api/core/search/#searchboxcore#suggest and related, I can use suggest then retrieve to get the geojson points and post-filter them. However, that probably means I need to write my own widget.
+    - idea: do this server-side + client-side:
+      - server-side uses fgf of areas to create an rtree
+      - send rtree to client-side
+      - use wasm-compiled rust or js-compatible lib to do client-side rtree-based filtering
 - [ ] specialise to green.houseofmoran.io
   - [ ] switch netlify to be able to deploy multiple front-ends (green.houseofmoran.io and spectrum.houseofmoran.io)
   - [ ] switch fly.io to deploy to geo.houseofmoran.io
   - [ ] move current api to be under geo.houseofmoran.io/green/v1
-- [ ] support relations, to increase coverage
 - [ ] allow route parts nearby greenery to be highlighted, and not just those that go through greenery
 
   - [ ] for each route returned:

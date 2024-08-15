@@ -2,6 +2,7 @@ use std::{path::PathBuf, sync::Arc};
 
 use api::{
     env::{load_public, load_secret},
+    flatgeobuf::FgbSource,
     regions::{regions, route, Regions},
     routing::StadiaMapsRouting,
     state::AppState,
@@ -25,7 +26,11 @@ use url::Url;
 struct Args {
     /// path to FlatGeobuf file
     #[arg(long, short)]
-    fgb: PathBuf,
+    fgb_file: Option<PathBuf>,
+
+    /// FlatGeobuf URL
+    #[arg(long, short)]
+    fgb_url: Option<Url>,
 
     /// enable opentelemetry
     #[arg(long)]
@@ -63,8 +68,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let cors = CorsLayer::new()
         .allow_methods([Method::GET])
-        // allow requests from any origin
         .allow_origin(Any);
+
+    let flatgeobuf = if let Some(path) = args.fgb_file {
+        Arc::new(FgbSource::from_path(&path))
+    } else if let Some(url) = args.fgb_url {
+        Arc::new(FgbSource::from_url(&url))
+    } else {
+        return Err("No FlatGeobuf file specified".into());
+    };
+
+    info!("Using FlatGeobuf source: {}", flatgeobuf);
 
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
@@ -74,7 +88,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(cors)
         .layer(CompressionLayer::new())
         .with_state(AppState {
-            regions: Arc::new(Regions::from_flatgeobuf(&args.fgb)),
+            flatgeobuf,
+            regions: Arc::new(Regions::default()),
             routing: Arc::new(StadiaMapsRouting::new(
                 &stadia_maps_api_key,
                 &stadia_maps_endpoint_base,
