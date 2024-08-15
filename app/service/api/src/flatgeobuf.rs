@@ -5,7 +5,9 @@ use std::{
 };
 
 use core_geo::Bounds;
-use flatgeobuf::{geozero::ToGeo, FallibleStreamingIterator, FgbReader, HttpFgbReader};
+use flatgeobuf::{
+    geozero::ToGeo, AsyncFeatureIter, FallibleStreamingIterator, FgbReader, HttpFgbReader,
+};
 use geo::Geometry;
 use std::fmt::Display;
 use tracing::{instrument, trace};
@@ -93,28 +95,41 @@ impl FgbUrlSource {
         let reader = HttpFgbReader::open(&self.url.to_string()).await?;
         trace!("Opened reader");
 
-        trace!("Selecting bbox, {:?}", bounds);
-        let mut features = reader
-            .select_bbox(bounds.sw_lon, bounds.sw_lat, bounds.ne_lon, bounds.ne_lat)
-            .await?;
-        trace!("Selected bbox");
-
-        trace!("Iterating over features");
-        let mut geoms: Vec<Geometry<f64>> = vec![];
-        let mut report_at = 1;
-        while let Some(feature) = features.next().await? {
-            let geom: Geometry<f64> = feature.to_geo()?;
-            geoms.push(geom);
-            if geoms.len() == report_at {
-                trace!("Loaded {} geoms", geoms.len());
-                report_at *= 2;
-            }
-        }
-        trace!(
-            "Finished iterating over features, found {} geoms",
-            geoms.len()
-        );
+        let mut features = select_bbox(reader, &bounds).await?;
+        let geoms = load_geoms(&mut features).await?;
 
         Ok(geoms)
     }
+}
+
+#[instrument(skip(reader, bounds))]
+async fn select_bbox(
+    reader: HttpFgbReader,
+    bounds: &Bounds,
+) -> Result<AsyncFeatureIter, Box<dyn std::error::Error>> {
+    Ok(reader
+        .select_bbox(bounds.sw_lon, bounds.sw_lat, bounds.ne_lon, bounds.ne_lat)
+        .await?)
+}
+
+#[instrument(skip(features))]
+async fn load_geoms(
+    features: &mut AsyncFeatureIter,
+) -> Result<Vec<Geometry>, Box<dyn std::error::Error>> {
+    trace!("Iterating over features");
+    let mut geoms: Vec<Geometry<f64>> = vec![];
+    let mut report_at = 1;
+    while let Some(feature) = features.next().await? {
+        let geom: Geometry<f64> = feature.to_geo()?;
+        geoms.push(geom);
+        if geoms.len() == report_at {
+            trace!("Loaded {} geoms", geoms.len());
+            report_at *= 2;
+        }
+    }
+    trace!(
+        "Finished iterating over features, found {} geoms",
+        geoms.len()
+    );
+    Ok(geoms)
 }
