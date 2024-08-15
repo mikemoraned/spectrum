@@ -58,6 +58,7 @@ impl Regions {
         })
     }
 
+    #[instrument(skip(regions, route))]
     fn find_possibly_overlapping_regions(
         regions: &[Geometry],
         route: &Polygon,
