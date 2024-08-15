@@ -19,6 +19,7 @@ tracing-log = { workspace = true }
 
 geo = { workspace = true }
 flatgeobuf = { workspace = true }
+pmtiles = { workspace = true }
 rstar = { workspace = true }
 geo-validity-check = { workspace = true }
 
