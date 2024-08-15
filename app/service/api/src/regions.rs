@@ -36,21 +36,20 @@ impl Regions {
         Ok(GeometryCollection::from_iter(unioned))
     }
 
-    #[instrument(skip(self, fgb, route, bounds))]
+    #[instrument(skip(self, fgb, route))]
     pub async fn label_route(
         &self,
         fgb: &FgbSource,
         route: &LineString<f64>,
-        bounds: &Bounds,
     ) -> Result<LabelledRoute, Box<dyn std::error::Error>> {
-        let regions = fgb.load(&bounds).await?;
+        let route_bounding_rect = route.bounding_rect().expect("some bounding rect");
 
-        let route_bounding_rect = route
-            .bounding_rect()
-            .expect("some bounding rect")
-            .to_polygon();
+        let regions = fgb.load(&route_bounding_rect.into()).await?;
 
-        let possible = Regions::find_possibly_overlapping_regions(&regions, &route_bounding_rect)?;
+        let possible = Regions::find_possibly_overlapping_regions(
+            &regions,
+            &route_bounding_rect.to_polygon(),
+        )?;
         let overlaps = possible.clip(&MultiLineString::new(vec![route.clone()]), false);
 
         Ok(LabelledRoute {
@@ -108,7 +107,7 @@ pub async fn route(
     let fgb = state.flatgeobuf.clone();
     let routing = state.routing.clone();
     let route = routing.find_route(&bounds).await.unwrap();
-    let labelled_route = regions.label_route(&fgb, &route, &bounds).await.unwrap();
+    let labelled_route = regions.label_route(&fgb, &route).await.unwrap();
     let route_geojson = as_geojson(&GeometryCollection::from(vec![Geometry::LineString(
         labelled_route.route,
     )]));
