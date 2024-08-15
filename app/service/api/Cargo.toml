@@ -18,6 +18,7 @@ tracing = { workspace = true }
 
 geo = { workspace = true }
 flatgeobuf = { workspace = true }
+http-range-client = { workspace = true }
 rstar = { workspace = true }
 geo-validity-check = { workspace = true }
 
