@@ -24,5 +24,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let metadata_json: Value = serde_json::from_str(&metadata)?;
     println!("{}", serde_json::to_string_pretty(&metadata_json)?);
 
+    let tile = reader.get_tile(1, 10, 10).await?;
+    if let Some(bytes) = tile {
+        println!("Tile byte size: {}", bytes.len());
+    } else {
+        println!("Tile not found");
+    }
+
     Ok(())
 }
