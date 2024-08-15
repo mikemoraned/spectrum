@@ -116,9 +116,12 @@ flowchart TB
     - [x] extend api to use a remote URL
     - [x] fix performance problems: a relatively small file (https://spikes-remote-fgb.b-cdn.net/relations2.fgb, 149M) takes 3 minutes to fetch all geoms from for Edinburgh; this is surprising. Ideas for improving this:
       - [ ] add tracing to used libraries (flatgeobuf, http_range_client) to see where in the time in this 3 mins is being spent
-      - [ ] narrow geoms needed for route display: geoms needed for intersection with the route can come from the restricted bbox of the route and not Edinburgh as a whole
       - [ ] experiment: upload biggest file (relations5.fgb, 3.0G) and see if the latency scales with the total size (if so, that would indicate fgb is perhaps trying downloading the whole thing when it shouldn't)
-      - [ ] experiment: switch to a different CDN provider than bunny.net that also supports range requests
+      - [x] install a proxy (e.g. Proxyman) and look at what requests it is making
+        - done: unexpectedly, for Edinburgh, it _is_ making range requests, but a lot of them. It's making about 6000+ separate GET's. Is it a coincidence that the number of polygons is about 6000? Is it making a separate request for each polygon?
+      - [ ] narrow geoms needed for route display: geoms needed for intersection with the route can come from the restricted bbox of the route and not Edinburgh as a whole
+      - [-] experiment: switch to a different CDN provider than bunny.net that also supports range requests
+        - aborted this as it looks like range requests are going through fine (from looking at Proxyman)
 - [ ] vN: more deep support of relations
   - [ ] add commandline param to only add Ways directly or via Relations (just to more easily see where coverage comes from)
   - [ ] support mapping Relations like Princes Street Gardens (https://www.openstreetmap.org/relation/963806#map=17/55.94966/-3.20065) which seem to contain multiple outer Ways; I think because these Ways are part of multiple Relations e.g.https://www.openstreetmap.org/way/290611951#map=18/55.94956/-3.20217
