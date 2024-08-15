@@ -1,5 +1,4 @@
 use std::{
-    fmt::Display,
     fs::File,
     io::BufReader,
     path::{Path, PathBuf},
@@ -8,7 +7,7 @@ use std::{
 use core_geo::Bounds;
 use flatgeobuf::{geozero::ToGeo, FallibleStreamingIterator, FgbReader, HttpFgbReader};
 use geo::Geometry;
-use http_range_client::BufferedHttpRangeClient;
+use std::fmt::Display;
 use tracing::{instrument, trace};
 use url::Url;
 
@@ -90,12 +89,8 @@ impl FgbUrlSource {
         &self,
         bounds: &Bounds,
     ) -> Result<Vec<Geometry<f64>>, Box<dyn std::error::Error>> {
-        trace!("Creating HTTP client");
-        let client = BufferedHttpRangeClient::new(&self.url.to_string());
-        trace!("Created HTTP client");
-
         trace!("Opening reader for FlatGeobuf URL: {:?}", self.url);
-        let reader = HttpFgbReader::new(client).await?;
+        let reader = HttpFgbReader::open(&self.url.to_string()).await?;
         trace!("Opened reader");
 
         trace!("Selecting bbox, {:?}", bounds);
