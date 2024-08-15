@@ -10,7 +10,7 @@ use ferrostar::{
     },
 };
 use geo::{coord, LineString};
-use tracing::trace;
+use tracing::{instrument, trace};
 use url::Url;
 
 pub struct StadiaMapsRouting {
@@ -29,6 +29,7 @@ impl StadiaMapsRouting {
         })
     }
 
+    #[instrument(skip(self, bounds))]
     pub async fn find_route(
         &self,
         bounds: &Bounds,
