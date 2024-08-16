@@ -18,6 +18,7 @@ tracing = { workspace = true }
 tracing-log = { workspace = true }
 
 geo = { workspace = true }
+geo-types = { workspace = true }
 flatgeobuf = { workspace = true }
 pmtiles = { workspace = true }
 tree_magic = { workspace = true }
