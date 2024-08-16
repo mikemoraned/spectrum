@@ -20,6 +20,9 @@ tracing-log = { workspace = true }
 geo = { workspace = true }
 flatgeobuf = { workspace = true }
 pmtiles = { workspace = true }
+tree_magic = { workspace = true }
+mvt-reader = { workspace = true }
+async-compression = { workspace = true }
 rstar = { workspace = true }
 geo-validity-check = { workspace = true }
 

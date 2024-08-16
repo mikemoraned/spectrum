@@ -129,7 +129,8 @@ flowchart TB
 - [ ] spike: using `pmtiles` as a data source:
   - [x] create minimal cli which loads from a url and dumps some info
     - dumping TileJSON metadata
-  - [ ] dump any vector geo features I can (e.g. polygons)
+  - [x] getting a tile, decompressing it, and printing tile info
+  - [ ] dump any vector geo features I can (e.g. polygons) as geojson
   - [ ] try reading a public data source of pmtiles, which covers Edinburgh, and show as regions
     - perhaps https://data.source.coop/protomaps/openstreetmap/tiles/v3.pmtiles
 - [ ] vN: more deep support of relations
