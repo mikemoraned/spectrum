@@ -25,7 +25,7 @@ pmtiles = { version = "0.10", features = [
     "reqwest-rustls-tls-native-roots",
 ] }
 mvt-reader = "1.5.0"
-tile-grid = "0.5.2"
+tile-grid = "0.6.1"
 async-compression = { version = "0.4.12", features = ["tokio", "gzip"] }
 tree_magic = "0.2.3"
 geozero = "0.13.0"

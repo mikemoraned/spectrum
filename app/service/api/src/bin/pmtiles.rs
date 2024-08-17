@@ -87,7 +87,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         let height = (bbox.bottom - bbox.top).abs();
                         let after = Coord {
                             x: (((1.0f32 * (c_32.x / tile_extent)) as f64) * width) + bbox.left,
-                            y: (((-1.0f32 * (c_32.y / tile_extent)) as f64) * height) + bbox.top,
+                            y: bbox.top - (((1.0f32 * (c_32.y / tile_extent)) as f64) * height),
                         };
                         // println!("{:?} -> {:?}", before, after);
                         after
