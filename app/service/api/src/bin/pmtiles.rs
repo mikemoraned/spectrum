@@ -66,9 +66,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let coords: Vec<Coord<f64>> = p_32
                     .exterior()
                     .coords()
-                    .map(|c_32| Coord {
-                        x: c_32.x as f64,
-                        y: c_32.y as f64,
+                    .map(|c_32| {
+                        let before = c_32;
+                        let after = Coord {
+                            x: c_32.x as f64 / 1000.0,
+                            y: c_32.y as f64 / 1000.0,
+                        };
+                        println!("{:?} -> {:?}", before, after);
+                        after
                     })
                     .collect();
                 Polygon::new(LineString::from(coords), vec![])
