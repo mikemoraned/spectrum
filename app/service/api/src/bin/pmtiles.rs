@@ -6,12 +6,12 @@ use std::{
 
 use async_compression::tokio::bufread::GzipDecoder;
 use clap::Parser;
-use geo::{Coord, GeometryCollection, LineString, MultiPolygon, Polygon};
+use geo::{Coord, GeometryCollection, LineString, MultiLineString, MultiPolygon, Polygon};
 use geojson::FeatureCollection;
 use mvt_reader::Reader;
 use pmtiles::{async_reader::AsyncPmTilesReader, cache::HashMapCache, HttpBackend};
 use serde_json::Value;
-use tile_grid::tms;
+use tile_grid::{tms, Xyz};
 use tokio::io::AsyncReadExt;
 use url::Url;
 
@@ -40,9 +40,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let metadata_json: Value = serde_json::from_str(&metadata)?;
     println!("{}", serde_json::to_string_pretty(&metadata_json)?);
 
-    let (lon, lat) = (-3.188267, 55.953251); // edinburgh
+    // let (lon, lat) = (-3.188267, 55.953251); // edinburgh
     let tms = tms().lookup("WebMercatorQuad")?;
-    let tile = tms.tile(lon, lat, 4)?;
+    // let tile = tms.tile(lon, lat, 4)?;
+    let tile = Xyz::new(251, 159, 9); // should cover Edinburgh
     let tile_bounds = tms.bounds(&tile)?;
     println!("Tile for Edinburgh: {:?}, bbox: {:?}", tile, tile_bounds);
     let tile_extent = 4096.0;
@@ -66,47 +67,89 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let mut layer_id = 0;
             for (id, name) in layer_names.iter().enumerate() {
                 println!("Layer: {}", name);
-                if name == "landcover" {
+                if name == "roads" {
                     layer_id = id;
                 }
             }
-            fn convert_f32_to_f64(
-                p_32: Polygon<f32>,
+            fn convert_linestring_f32_to_f64(
+                l_32: &LineString<f32>,
                 tile_extent: f64,
                 bbox: &tile_grid::BoundingBox,
-            ) -> geo_types::Polygon<f64> {
-                let coords: Vec<Coord<f64>> = p_32
-                    .exterior()
+            ) -> geo_types::LineString<f64> {
+                let coords: Vec<Coord<f64>> = l_32
                     .coords()
                     .map(|c_32| {
                         // let before = c_32;
                         let width = (bbox.right - bbox.left).abs();
                         let height = (bbox.bottom - bbox.top).abs();
                         let after = Coord {
-                            x: ((c_32.x as f64 / tile_extent) * width) + bbox.left,
-                            y: ((c_32.y as f64 / tile_extent) * height) + bbox.top,
+                            x: (-1.0 * (c_32.x as f64 / tile_extent) * width) + bbox.left,
+                            y: (1.0 * (c_32.y as f64 / tile_extent) * height) + bbox.top,
                         };
                         // println!("{:?} -> {:?}", before, after);
                         after
                     })
                     .collect();
-                Polygon::new(LineString::from(coords), vec![])
+                LineString::from(coords)
+            }
+            fn convert_poly_f32_to_f64(
+                p_32: Polygon<f32>,
+                tile_extent: f64,
+                bbox: &tile_grid::BoundingBox,
+            ) -> geo_types::Polygon<f64> {
+                let linestring =
+                    convert_linestring_f32_to_f64(&p_32.exterior(), tile_extent, &bbox);
+                Polygon::new(linestring, vec![])
             }
             let geometry = reader
                 .get_features(layer_id)?
                 .into_iter()
                 .flat_map(|f| match f.geometry {
+                    geo::Geometry::Point(_) => {
+                        println!("Point");
+                        None
+                    }
+                    geo::Geometry::Line(_) => {
+                        println!("Line");
+                        None
+                    }
+                    geo::Geometry::LineString(_) => {
+                        println!("LineString");
+                        None
+                    }
                     geo::Geometry::Polygon(p_32) => Some(geo_types::Geometry::from(
-                        convert_f32_to_f64(p_32, tile_extent, &tile_bounds),
+                        convert_poly_f32_to_f64(p_32, tile_extent, &tile_bounds),
                     )),
+                    geo::Geometry::MultiPoint(_) => {
+                        println!("MultiPoint");
+                        None
+                    }
+                    geo::Geometry::MultiLineString(l_32) => {
+                        let lines: Vec<_> = l_32
+                            .into_iter()
+                            .map(|l| convert_linestring_f32_to_f64(&l, tile_extent, &tile_bounds))
+                            .collect();
+                        Some(geo_types::Geometry::from(MultiLineString::from_iter(lines)))
+                    }
                     geo::Geometry::MultiPolygon(p_32) => {
                         let polys: Vec<_> = p_32
                             .into_iter()
-                            .map(|p| convert_f32_to_f64(p, tile_extent, &tile_bounds))
+                            .map(|p| convert_poly_f32_to_f64(p, tile_extent, &tile_bounds))
                             .collect();
                         Some(geo_types::Geometry::from(MultiPolygon::from_iter(polys)))
                     }
-                    _ => None,
+                    geo::Geometry::GeometryCollection(_) => {
+                        println!("GeometryCollection");
+                        None
+                    }
+                    geo::Geometry::Rect(_) => {
+                        println!("Rect");
+                        None
+                    }
+                    geo::Geometry::Triangle(_) => {
+                        println!("Triangle");
+                        None
+                    }
                 })
                 .collect::<Vec<_>>();
             let geometry_collection = GeometryCollection::from_iter(geometry);
