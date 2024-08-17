@@ -1,4 +1,8 @@
-use std::path::PathBuf;
+use std::{
+    fs::File,
+    io::{BufWriter, Write},
+    path::PathBuf,
+};
 
 use async_compression::tokio::bufread::GzipDecoder;
 use clap::Parser;
@@ -79,8 +83,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .collect::<Vec<_>>();
             let geometry_collection = GeometryCollection::from_iter(geometry);
             let feature_collection = FeatureCollection::from(&geometry_collection);
-            let geojson_string = feature_collection.to_string();
-            println!("{}", geojson_string);
+            let file = File::create(args.geojson)?;
+            let mut writer = BufWriter::new(file);
+            serde_json::to_writer(&mut writer, &feature_collection)?;
+            writer.flush()?;
         }
     } else {
         println!("Tile not found");
