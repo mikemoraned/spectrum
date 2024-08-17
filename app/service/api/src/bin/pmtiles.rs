@@ -6,7 +6,7 @@ use std::{
 
 use async_compression::tokio::bufread::GzipDecoder;
 use clap::Parser;
-use geo::{Coord, GeometryCollection, LineString, Polygon};
+use geo::{Coord, GeometryCollection, LineString, MultiPolygon, Polygon};
 use geojson::FeatureCollection;
 use mvt_reader::Reader;
 use pmtiles::{async_reader::AsyncPmTilesReader, cache::HashMapCache, HttpBackend};
@@ -62,21 +62,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     layer_id = id;
                 }
             }
+            fn convert_f32_to_f64(p_32: Polygon<f32>) -> geo_types::Polygon<f64> {
+                let coords: Vec<Coord<f64>> = p_32
+                    .exterior()
+                    .coords()
+                    .map(|c_32| Coord {
+                        x: c_32.x as f64,
+                        y: c_32.y as f64,
+                    })
+                    .collect();
+                Polygon::new(LineString::from(coords), vec![])
+            }
             let geometry = reader
                 .get_features(layer_id)?
                 .into_iter()
                 .flat_map(|f| match f.geometry {
                     geo::Geometry::Polygon(p_32) => {
-                        let coords: Vec<Coord<f64>> = p_32
-                            .exterior()
-                            .coords()
-                            .map(|c_32| Coord {
-                                x: c_32.x as f64,
-                                y: c_32.y as f64,
-                            })
-                            .collect();
-                        let poly = Polygon::new(LineString::from(coords), vec![]);
-                        Some(geo_types::Geometry::from(poly))
+                        Some(geo_types::Geometry::from(convert_f32_to_f64(p_32)))
+                    }
+                    geo::Geometry::MultiPolygon(p_32) => {
+                        let polys: Vec<_> = p_32.into_iter().map(convert_f32_to_f64).collect();
+                        Some(geo_types::Geometry::from(MultiPolygon::from_iter(polys)))
                     }
                     _ => None,
                 })
