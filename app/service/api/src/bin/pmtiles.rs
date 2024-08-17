@@ -83,8 +83,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         let width = (bbox.right - bbox.left).abs();
                         let height = (bbox.bottom - bbox.top).abs();
                         let after = Coord {
-                            x: (-1.0 * (c_32.x as f64 / tile_extent) * width) + bbox.left,
-                            y: (1.0 * (c_32.y as f64 / tile_extent) * height) + bbox.top,
+                            x: (1.0f64 * (c_32.x as f64 / tile_extent) * width) + bbox.left,
+                            y: (-1.0f64 * (c_32.y as f64 / tile_extent) * height) + bbox.top,
                         };
                         // println!("{:?} -> {:?}", before, after);
                         after
