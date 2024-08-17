@@ -36,9 +36,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cache = HashMapCache::default();
     let reader = AsyncPmTilesReader::try_from_cached_source(backend, cache).await?;
 
-    let metadata = reader.get_metadata().await?;
-    let metadata_json: Value = serde_json::from_str(&metadata)?;
-    println!("{}", serde_json::to_string_pretty(&metadata_json)?);
+    // let metadata = reader.get_metadata().await?;
+    // let metadata_json: Value = serde_json::from_str(&metadata)?;
+    // println!("{}", serde_json::to_string_pretty(&metadata_json)?);
+
+    let tile_json = reader.parse_tilejson(vec![]).await?;
+    println!("{:?}", tile_json);
 
     // let (lon, lat) = (-3.188267, 55.953251); // edinburgh
     let tms = tms().lookup("WebMercatorQuad")?;
@@ -46,7 +49,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tile = Xyz::new(251, 159, 9); // should cover Edinburgh
     let tile_bounds = tms.bounds(&tile)?;
     println!("Tile for Edinburgh: {:?}, bbox: {:?}", tile, tile_bounds);
-    let tile_extent = 4096.0;
+    let tile_extent = 4096.0f32;
 
     let tile = reader.get_tile(tile.z, tile.x, tile.y).await?;
     if let Some(bytes) = tile {
@@ -62,8 +65,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "Guessed MIME type of decompressed: {}",
                 tree_magic::from_u8(&decompressed_data)
             );
-            let reader = Reader::new(decompressed_data)?;
-            let layer_names = reader.get_layer_names()?;
+            let mvt_reader = Reader::new(decompressed_data)?;
+            let layer_names = mvt_reader.get_layer_names()?;
             let mut layer_id = 0;
             for (id, name) in layer_names.iter().enumerate() {
                 println!("Layer: {}", name);
@@ -73,7 +76,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             fn convert_linestring_f32_to_f64(
                 l_32: &LineString<f32>,
-                tile_extent: f64,
+                tile_extent: f32,
                 bbox: &tile_grid::BoundingBox,
             ) -> geo_types::LineString<f64> {
                 let coords: Vec<Coord<f64>> = l_32
@@ -83,8 +86,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         let width = (bbox.right - bbox.left).abs();
                         let height = (bbox.bottom - bbox.top).abs();
                         let after = Coord {
-                            x: (1.0f64 * (c_32.x as f64 / tile_extent) * width) + bbox.left,
-                            y: (-1.0f64 * (c_32.y as f64 / tile_extent) * height) + bbox.top,
+                            x: (((1.0f32 * (c_32.x / tile_extent)) as f64) * width) + bbox.left,
+                            y: (((-1.0f32 * (c_32.y / tile_extent)) as f64) * height) + bbox.top,
                         };
                         // println!("{:?} -> {:?}", before, after);
                         after
@@ -94,14 +97,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             fn convert_poly_f32_to_f64(
                 p_32: Polygon<f32>,
-                tile_extent: f64,
+                tile_extent: f32,
                 bbox: &tile_grid::BoundingBox,
             ) -> geo_types::Polygon<f64> {
                 let linestring =
                     convert_linestring_f32_to_f64(&p_32.exterior(), tile_extent, &bbox);
                 Polygon::new(linestring, vec![])
             }
-            let geometry = reader
+            let geometry = mvt_reader
                 .get_features(layer_id)?
                 .into_iter()
                 .flat_map(|f| match f.geometry {
