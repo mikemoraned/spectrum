@@ -11,6 +11,7 @@ use geojson::FeatureCollection;
 use mvt_reader::Reader;
 use pmtiles::{async_reader::AsyncPmTilesReader, cache::HashMapCache, HttpBackend};
 use serde_json::Value;
+use tile_grid::tms;
 use tokio::io::AsyncReadExt;
 use url::Url;
 
@@ -39,7 +40,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let metadata_json: Value = serde_json::from_str(&metadata)?;
     println!("{}", serde_json::to_string_pretty(&metadata_json)?);
 
-    let tile = reader.get_tile(1, 10, 10).await?;
+    let (lon, lat) = (-3.188267, 55.953251); // edinburgh
+    let tms = tms().lookup("WebMercatorQuad")?;
+    let tile = tms.tile(lon, lat, 4)?;
+    let tile_bounds = tms.bounds(&tile)?;
+    println!("Tile for Edinburgh: {:?}, bbox: {:?}", tile, tile_bounds);
+    let tile_extent = 4096.0;
+
+    let tile = reader.get_tile(tile.z, tile.x, tile.y).await?;
     if let Some(bytes) = tile {
         println!("Tile byte size: {}", bytes.len());
         let data = bytes.to_vec();
@@ -62,17 +70,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     layer_id = id;
                 }
             }
-            fn convert_f32_to_f64(p_32: Polygon<f32>) -> geo_types::Polygon<f64> {
+            fn convert_f32_to_f64(
+                p_32: Polygon<f32>,
+                tile_extent: f64,
+                bbox: &tile_grid::BoundingBox,
+            ) -> geo_types::Polygon<f64> {
                 let coords: Vec<Coord<f64>> = p_32
                     .exterior()
                     .coords()
                     .map(|c_32| {
-                        let before = c_32;
+                        // let before = c_32;
+                        let width = (bbox.right - bbox.left).abs();
+                        let height = (bbox.bottom - bbox.top).abs();
                         let after = Coord {
-                            x: c_32.x as f64 / 1000.0,
-                            y: c_32.y as f64 / 1000.0,
+                            x: ((c_32.x as f64 / tile_extent) * width) + bbox.left,
+                            y: ((c_32.y as f64 / tile_extent) * height) + bbox.top,
                         };
-                        println!("{:?} -> {:?}", before, after);
+                        // println!("{:?} -> {:?}", before, after);
                         after
                     })
                     .collect();
@@ -82,11 +96,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .get_features(layer_id)?
                 .into_iter()
                 .flat_map(|f| match f.geometry {
-                    geo::Geometry::Polygon(p_32) => {
-                        Some(geo_types::Geometry::from(convert_f32_to_f64(p_32)))
-                    }
+                    geo::Geometry::Polygon(p_32) => Some(geo_types::Geometry::from(
+                        convert_f32_to_f64(p_32, tile_extent, &tile_bounds),
+                    )),
                     geo::Geometry::MultiPolygon(p_32) => {
-                        let polys: Vec<_> = p_32.into_iter().map(convert_f32_to_f64).collect();
+                        let polys: Vec<_> = p_32
+                            .into_iter()
+                            .map(|p| convert_f32_to_f64(p, tile_extent, &tile_bounds))
+                            .collect();
                         Some(geo_types::Geometry::from(MultiPolygon::from_iter(polys)))
                     }
                     _ => None,
