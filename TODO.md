@@ -132,8 +132,11 @@ flowchart TB
   - [x] getting a tile, decompressing it, and printing tile info
   - [ ] dump any vector geo features I can (e.g. polygons) as geojson
     - a tile is indexed by Z/Y/X and a vector tile is defined in screen coordinates (see https://github.com/mapbox/vector-tile-spec/blob/master/2.1/README.md), so to convert a tile to geojson, we need to first:
-      - [ ] understand how Z/Y/X defines the bounding box of a tile
+      - [x] understand how Z/Y/X defines the bounding box of a tile
+        - used `tile_grid` for this, and took a sample grid from https://pmtiles.io/?url=https%3A%2F%2Fdata.source.coop%2Fprotomaps%2Fopenstreetmap%2Ftiles%2Fv3.pmtiles#map=9.74/55.8875/-3.2624
       - [ ] use this to project tile coordinates into the global coordinates of geojson
+        - I have _sorta_ got this working except the alignment of Edinburgh from tile to how it shows on geojson.io is a bit off (looks like mostly in `y`). I suspect this is related to the projections used, so:
+          - [ ] fixup projections
   - [ ] try reading a public data source of pmtiles, which covers Edinburgh, and show as regions
     - perhaps https://data.source.coop/protomaps/openstreetmap/tiles/v3.pmtiles
 - [ ] vN: more deep support of relations
