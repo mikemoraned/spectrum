@@ -137,8 +137,8 @@ flowchart TB
       - [ ] use this to project tile coordinates into the global coordinates of geojson
         - I have _sorta_ got this working except the alignment of Edinburgh from tile to how it shows on geojson.io is a bit off (looks like mostly in `y`). I suspect this is related to the projections used, so:
           - [ ] fixup projections
-  - [ ] try reading a public data source of pmtiles, which covers Edinburgh, and show as regions
-    - perhaps https://data.source.coop/protomaps/openstreetmap/tiles/v3.pmtiles
+  - [ ] extract current code into a spike dir and make it not "infect" main code
+  - [ ] check I can filter the polygons found by tags
 - [ ] vN: more deep support of relations
   - [ ] add commandline param to only add Ways directly or via Relations (just to more easily see where coverage comes from)
   - [ ] support mapping Relations like Princes Street Gardens (https://www.openstreetmap.org/relation/963806#map=17/55.94966/-3.20065) which seem to contain multiple outer Ways; I think because these Ways are part of multiple Relations e.g.https://www.openstreetmap.org/way/290611951#map=18/55.94956/-3.20217
