@@ -16,18 +16,7 @@ dotenvy = "0.15.7"
 rstar = "0.12.0"
 geojson = { version = "0.24", features = ["geo-types"] }
 geo = "0.28.0"
-geo-types = "0.7.13"
 flatgeobuf = "4.2.1"
-pmtiles = { version = "0.10", features = [
-    "http-async",
-    "mmap-async-tokio",
-    "tilejson",
-    "reqwest-rustls-tls-native-roots",
-] }
-mvt-reader = "1.5.0"
-tile-grid = "0.6.1"
-async-compression = { version = "0.4.12", features = ["tokio", "gzip"] }
-tree_magic = "0.2.3"
 geozero = "0.13.0"
 cavalier_contours = "0.4.0"
 geo-validity-check = "0.1.0"
