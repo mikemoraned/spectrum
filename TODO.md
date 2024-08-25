@@ -138,6 +138,9 @@ flowchart TB
         - I have _sorta_ got this working except the alignment of Edinburgh from tile to how it shows on geojson.io is a bit off (looks like mostly in `y`). I suspect this is related to the projections used, so:
           - [ ] fixup projections
   - [ ] extract current code into a spike dir and make it not "infect" main code
+    - [x] create new pmtiles spike
+      - note: doesn't seem to be behaving as I saw it before, but it compiles and produces something, so I can fix it up again separately
+    - [ ] remove any code I added for spike from main service area
   - [ ] check I can filter the polygons found by tags
 - [ ] vN: more deep support of relations
   - [ ] add commandline param to only add Ways directly or via Relations (just to more easily see where coverage comes from)

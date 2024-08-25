@@ -4,3 +4,25 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+geo = "0.28.0"
+geo-types = "0.7.13"
+pmtiles = { version = "0.10", features = [
+    "http-async",
+    "mmap-async-tokio",
+    "tilejson",
+    "reqwest-rustls-tls-native-roots",
+] }
+mvt-reader = "1.5.0"
+tile-grid = "0.6.1"
+async-compression = { version = "0.4.12", features = ["tokio", "gzip"] }
+
+geojson = { version = "0.24", features = ["geo-types"] }
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+
+tokio = { version = "1.0", features = ["full"] }
+clap = { version = "4.5.13", features = ["derive"] }
+
+url = "2.5.2"
+reqwest = "0.12.5"
+tree_magic = "0.2.3"
