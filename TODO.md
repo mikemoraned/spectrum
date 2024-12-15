@@ -101,7 +101,7 @@ flowchart TB
       - [x] show overlapping segments in green
   - [x] refactor / remove unneeded code / dependencies
 
-- [ ] v0.7: focus on coverage
+- [x] v0.7: focus on coverage
   - [x] visualise green areas as a light green layer
   - [x] minimally support OSM Relations, to increase what I get from existing areas
     - [x] map the outer Way of a Relation to a Polygon
@@ -126,6 +126,22 @@ flowchart TB
       - [-] experiment: switch to a different CDN provider than bunny.net that also supports range requests
         - aborted this as it looks like range requests are going through fine (from looking at Proxyman)
       - [x] time to load is now about 1s (in total) for `/v2/route` but still minutes for `/v2/regions` so, disable loading/displaying the latter and just rely on mapbox base map for context of green areas
+- [ ] spike: using `pmtiles` as a data source:
+  - [x] create minimal cli which loads from a url and dumps some info
+    - dumping TileJSON metadata
+  - [x] getting a tile, decompressing it, and printing tile info
+  - [ ] dump any vector geo features I can (e.g. polygons) as geojson
+    - a tile is indexed by Z/Y/X and a vector tile is defined in screen coordinates (see https://github.com/mapbox/vector-tile-spec/blob/master/2.1/README.md), so to convert a tile to geojson, we need to first:
+      - [x] understand how Z/Y/X defines the bounding box of a tile
+        - used `tile_grid` for this, and took a sample grid from https://pmtiles.io/?url=https%3A%2F%2Fdata.source.coop%2Fprotomaps%2Fopenstreetmap%2Ftiles%2Fv3.pmtiles#map=9.74/55.8875/-3.2624
+      - [ ] use this to project tile coordinates into the global coordinates of geojson
+        - I have _sorta_ got this working except the alignment of Edinburgh from tile to how it shows on geojson.io is a bit off (looks like mostly in `y`). I suspect this is related to the projections used, so:
+          - [ ] fixup projections
+  - [ ] extract current code into a spike dir and make it not "infect" main code
+    - [x] create new pmtiles spike
+      - note: doesn't seem to be behaving as I saw it before, but it compiles and produces something, so I can fix it up again separately
+    - [ ] remove any code I added for spike from main service area
+  - [ ] check I can filter the polygons found by tags
 - [ ] vN: more deep support of relations
   - [ ] add commandline param to only add Ways directly or via Relations (just to more easily see where coverage comes from)
   - [ ] support mapping Relations like Princes Street Gardens (https://www.openstreetmap.org/relation/963806#map=17/55.94966/-3.20065) which seem to contain multiple outer Ways; I think because these Ways are part of multiple Relations e.g.https://www.openstreetmap.org/way/290611951#map=18/55.94956/-3.20217
